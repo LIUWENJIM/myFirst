@@ -1,0 +1,464 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@plugin "@tailwindcss/typography";
+
+/* 启用深色模式 - 使用 class 策略 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================
+   自定义主题 - Teal 青绿主色调 + 橙色点缀
+   ============================================ */
+@theme {
+  /* 主色调: 青绿 Teal */
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+  --color-primary-950: #042f2e;
+
+  /* 强调色: 橙色 Accent */
+  --color-accent-50: #fff7ed;
+  --color-accent-100: #ffedd5;
+  --color-accent-200: #fed7aa;
+  --color-accent-300: #fdba74;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --color-accent-600: #ea580c;
+  --color-accent-700: #c2410c;
+  --color-accent-800: #9a3412;
+  --color-accent-900: #7c2d12;
+
+  /* 字体 */
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+}
+
+/* ============================================
+   基础样式
+   ============================================ */
+@layer base {
+  html, body, #root {
+    @apply h-full m-0 p-0;
+  }
+
+  body {
+    @apply antialiased;
+    font-family: var(--font-sans);
+    @apply bg-gradient-to-br from-teal-50/60 via-white to-emerald-50/40 text-slate-900;
+    @apply dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 dark:text-slate-50;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-semibold tracking-tight;
+  }
+
+  /* 选中文本颜色 */
+  ::selection {
+    @apply bg-primary-200/60 dark:bg-primary-800/60 text-primary-900 dark:text-primary-100;
+  }
+}
+
+/* ============================================
+   组件样式（不使用 @layer 避免 Tailwind v4 限制）
+   ============================================ */
+
+/* 卡片 */
+.dark-card {
+  @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl;
+  @apply border border-slate-200/60 dark:border-slate-700/50;
+  @apply shadow-md shadow-slate-200/60 dark:shadow-slate-900/40;
+  @apply transition-all duration-200;
+}
+
+.dark-card-hover {
+  @apply bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl;
+  @apply border border-slate-200/60 dark:border-slate-700/50;
+  @apply shadow-md shadow-slate-200/60 dark:shadow-slate-900/40;
+  @apply transition-all duration-200;
+  @apply hover:shadow-lg hover:shadow-slate-200/70 dark:hover:shadow-slate-900/50;
+  @apply hover:border-slate-300/70 dark:hover:border-slate-600/50;
+}
+
+/* 输入框 */
+.dark-input {
+  @apply bg-white dark:bg-slate-800/80;
+  @apply border border-slate-200 dark:border-slate-700;
+  @apply text-slate-900 dark:text-slate-100;
+  @apply placeholder:text-slate-400 dark:placeholder:text-slate-500;
+  @apply focus:ring-2 focus:ring-primary-500/20 focus:border-primary-400 dark:focus:ring-primary-400/20 dark:focus:border-primary-400;
+  @apply transition-all duration-200;
+}
+
+/* 文字颜色 */
+.dark-text {
+  @apply text-slate-900 dark:text-slate-50;
+}
+
+.dark-text-muted {
+  @apply text-slate-500 dark:text-slate-400;
+}
+
+/* 按钮 */
+.btn-primary {
+  @apply bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-400;
+  @apply text-white font-medium;
+  @apply hover:from-primary-700 hover:to-primary-600 dark:hover:from-primary-600 dark:hover:to-primary-500;
+  @apply active:scale-[0.97];
+  @apply shadow-lg shadow-primary-500/25 dark:shadow-primary-500/15;
+  @apply transition-all duration-200;
+}
+
+.btn-accent {
+  @apply bg-gradient-to-r from-accent-600 to-accent-500;
+  @apply text-white font-medium;
+  @apply hover:from-accent-700 hover:to-accent-600;
+  @apply active:scale-[0.97];
+  @apply shadow-lg shadow-accent-500/25;
+  @apply transition-all duration-200;
+}
+
+.btn-secondary {
+  @apply bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200;
+  @apply hover:bg-slate-100 dark:hover:bg-slate-700;
+  @apply active:scale-[0.97];
+  @apply border border-slate-200 dark:border-slate-700;
+  @apply transition-all duration-200;
+}
+
+.btn-ghost {
+  @apply text-slate-600 dark:text-slate-400;
+  @apply hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white;
+  @apply active:scale-[0.97];
+  @apply transition-all duration-200;
+}
+
+/* 状态徽章 */
+.status-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold;
+  @apply border backdrop-blur-sm;
+}
+
+/* 进度条 */
+.progress-bar {
+  @apply h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden;
+}
+
+.progress-bar-fill {
+  @apply h-full rounded-full transition-all duration-700 ease-out;
+}
+
+/* 分割线 */
+.divider {
+  @apply border-t border-slate-100 dark:border-slate-700/50;
+}
+
+/* 标签 */
+.tag {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium;
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300;
+}
+
+.tag-primary {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium;
+  @apply bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300;
+}
+
+/* ============================================
+   通用语义组件类
+   ============================================ */
+
+.page-container {
+  @apply mx-auto;
+}
+
+.page-header {
+  @apply mb-8;
+}
+
+.page-title {
+  @apply text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3;
+}
+
+.page-subtitle {
+  @apply text-slate-500 dark:text-slate-400 mt-1;
+}
+
+/* 页面头部装饰图标 */
+.page-title-icon {
+  @apply w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/25;
+}
+
+/* 内容卡片 */
+.card-container {
+  @apply bg-white dark:bg-slate-800/90 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 transition-all duration-200;
+}
+
+.card-container-interactive {
+  @apply bg-white dark:bg-slate-800/90 rounded-2xl shadow-sm transition-all duration-200;
+  @apply border border-slate-100 dark:border-slate-700/50;
+  @apply hover:shadow-md hover:border-slate-200 dark:hover:border-slate-600/50;
+}
+
+/* 统计卡片网格 */
+.stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+}
+
+/* 表格容器 */
+.table-container {
+  @apply bg-white dark:bg-slate-800/90 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden;
+}
+
+/* 筛选/工具栏 */
+.filter-bar {
+  @apply bg-white dark:bg-slate-800/90 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700/50 mb-6;
+}
+
+/* 空状态容器 */
+.empty-state {
+  @apply text-center py-20 bg-white dark:bg-slate-800/90 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50;
+}
+
+/* 主要行动按钮（全宽） */
+.btn-cta {
+  @apply w-full px-6 py-3 rounded-xl font-semibold text-sm transition-all
+    bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700
+    text-white shadow-lg shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* 状态徽章 */
+.badge-completed {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium;
+}
+
+.badge-pending {
+  @apply inline-flex px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-full text-sm;
+}
+
+.badge-failed {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-full text-sm font-medium;
+}
+
+.badge-progress {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full text-sm font-medium;
+}
+
+/* 小箭头图标 */
+.arrow-icon {
+  @apply w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all flex-shrink-0;
+}
+
+/* 按钮图标容器 */
+.icon-box {
+  @apply w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0;
+}
+
+.icon-box.active {
+  @apply bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400;
+}
+
+.icon-box.inactive {
+  @apply bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400;
+}
+
+/* 渐变背景块 */
+.gradient-section {
+  @apply bg-gradient-to-br from-primary-50/60 via-emerald-50/30 to-teal-50/40 dark:from-primary-900/20 dark:via-emerald-900/10 dark:to-teal-900/15 rounded-xl border border-primary-100/50 dark:border-primary-800/20;
+}
+
+/* Toast 通知 */
+.toast-success {
+  @apply bg-gradient-to-r from-emerald-600 to-emerald-500 text-white;
+}
+
+.toast-error {
+  @apply bg-gradient-to-r from-red-600 to-red-500 text-white;
+}
+
+/* ============================================
+   自定义滚动条
+   ============================================ */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-slate-100 rounded;
+    @apply dark:bg-slate-800;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded hover:bg-slate-400;
+    @apply dark:bg-slate-600 dark:hover:bg-slate-500;
+  }
+}
+
+/* ============================================
+   React Big Calendar 样式
+   ============================================ */
+.rbc-calendar {
+  @apply font-sans;
+}
+
+.rbc-toolbar {
+  @apply mb-6;
+}
+
+.rbc-toolbar button {
+  @apply px-4 py-2 rounded-lg font-medium text-sm;
+  @apply bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200;
+  @apply border border-slate-200/50 dark:border-slate-700/50;
+  @apply hover:bg-slate-200/90 dark:hover:bg-slate-700/90;
+  @apply backdrop-blur-sm;
+  @apply transition-all duration-200;
+}
+
+.rbc-toolbar button.rbc-active {
+  @apply bg-primary-600/90 dark:bg-primary-500/90 text-white;
+  @apply border-primary-600/90 dark:border-primary-500/90;
+  @apply shadow-lg shadow-primary-500/20;
+  @apply backdrop-blur-sm;
+}
+
+.rbc-toolbar-label {
+  @apply font-display font-bold text-lg text-slate-900 dark:text-white;
+}
+
+.rbc-header {
+  @apply py-3 font-display font-semibold text-sm uppercase tracking-wide;
+  @apply bg-slate-50/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300;
+  @apply border-b-2 border-slate-200/50 dark:border-slate-700/50;
+  @apply backdrop-blur-sm;
+}
+
+.rbc-month-view, .rbc-time-view, .rbc-agenda-view {
+  @apply rounded-xl overflow-hidden;
+  @apply border border-slate-200 dark:border-slate-700/50;
+}
+
+.rbc-day-bg, .rbc-time-header-content, .rbc-time-gutter {
+  @apply bg-white dark:bg-slate-900/50;
+}
+
+.rbc-off-range-bg {
+  @apply bg-slate-50 dark:bg-slate-950/50;
+}
+
+.rbc-today {
+  @apply bg-primary-50/80;
+  @apply dark:bg-primary-950/40;
+  @apply backdrop-blur-sm;
+}
+
+.rbc-time-slot {
+  @apply border-slate-100 dark:border-slate-800/50;
+}
+
+.rbc-event {
+  @apply rounded-lg shadow-md;
+  @apply transition-all duration-200;
+  @apply hover:shadow-xl hover:shadow-primary-500/20 hover:scale-[1.02];
+  @apply backdrop-blur-sm;
+}
+
+.rbc-event-content {
+  @apply font-medium;
+}
+
+.rbc-month-row {
+  @apply border-slate-200 dark:border-slate-700/30;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  @apply border-slate-100 dark:border-slate-800/30;
+}
+
+.rbc-time-view-resources .rbc-time-gutter {
+  @apply bg-slate-50/80 dark:bg-slate-800/30;
+}
+
+.rbc-time-header-content {
+  @apply border-slate-200 dark:border-slate-700/30;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+  @apply border-slate-200 dark:border-slate-700/50;
+  @apply bg-white dark:bg-slate-900/50;
+}
+
+.rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  @apply border-slate-100 dark:border-slate-800/30;
+  @apply py-3 px-4;
+}
+
+.rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+  @apply font-display font-semibold text-slate-700 dark:text-slate-300;
+}
+
+.rbc-show-more {
+  @apply font-semibold text-primary-600 dark:text-primary-400;
+  @apply hover:text-primary-700 dark:hover:text-primary-300;
+  @apply transition-colors duration-200;
+}
+
+.dark .rbc-calendar * {
+  @apply border-slate-700/30;
+}
+
+.dark .rbc-header {
+  @apply bg-slate-800/60 text-slate-200;
+}
+
+.dark .rbc-day-bg {
+  @apply bg-slate-900/30;
+}
+
+.dark .rbc-off-range-bg {
+  @apply bg-slate-950/50 text-slate-500;
+}
+
+.dark .rbc-today {
+  @apply bg-primary-950/30;
+}
+
+.dark .rbc-time-gutter {
+  @apply bg-slate-800/40;
+}
+
+.dark .rbc-agenda-view table.rbc-agenda-table {
+  @apply bg-slate-900/30;
+}
+
+/* ============================================
+   动画辅助类
+   ============================================ */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
