@@ -27,7 +27,7 @@ const InterviewDetailPanel = lazy(() => import('./components/InterviewDetailPane
 // Loading component
 const Loading = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="w-10 h-10 border-3 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+    <div className="w-10 h-10 border-3 rounded-full animate-spin" style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}} />
   </div>
 );
 
@@ -144,8 +144,8 @@ function InterviewWrapper() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-slate-200 border-t-primary-500 rounded-full mx-auto mb-4 animate-spin" />
-          <p className="text-slate-500">加载中...</p>
+          <div className="w-10 h-10 border-3 rounded-full mx-auto mb-4 animate-spin" style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}} />
+          <p style={{color: 'var(--color-muted)'}}>加载中...</p>
         </div>
       </div>
     );
@@ -275,7 +275,7 @@ function InterviewDetailPageWrapper() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{color: 'var(--color-primary)'}} />
       </div>
     );
   }
@@ -287,7 +287,8 @@ function InterviewDetailPageWrapper() {
           <p className="text-red-500 mb-4">{error || '面试记录不存在'}</p>
           <button
             onClick={() => navigate('/interviews')}
-            className="px-5 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+            className="px-5 py-2 text-white rounded-lg"
+            style={{backgroundColor: 'var(--color-primary)'}}
           >
             返回面试记录
           </button>
@@ -301,13 +302,16 @@ function InterviewDetailPageWrapper() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate('/interviews')}
-          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 rounded-lg transition-colors"
+          style={{color: 'var(--color-muted)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-body-text)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-xl font-bold" style={{color: 'var(--color-ink)'}}>
           面试详情 #{sessionId!.slice(-8)}
         </h1>
       </div>

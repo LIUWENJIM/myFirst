@@ -13,22 +13,30 @@ interface InterviewListItemProps {
   onStatusChange: (status: InterviewStatus) => void;
 }
 
-const statusConfig: Record<InterviewStatus, { label: string; className: string }> = {
+const statusConfig: Record<InterviewStatus, { label: string; bg: string; text: string; border: string }> = {
   PENDING: {
     label: '待面试',
-    className: 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-300/30 dark:border-blue-400/30',
+    bg: 'rgba(204,120,92,0.12)',
+    text: 'var(--color-primary)',
+    border: 'rgba(204,120,92,0.3)',
   },
   COMPLETED: {
     label: '已完成',
-    className: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-300/30 dark:border-emerald-400/30',
+    bg: 'rgba(16,185,129,0.12)',
+    text: '#10b981',
+    border: 'rgba(16,185,129,0.3)',
   },
   CANCELLED: {
     label: '已取消',
-    className: 'bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-300/30 dark:border-slate-400/30',
+    bg: 'var(--color-surface-soft)',
+    text: 'var(--color-muted)',
+    border: 'var(--color-hairline)',
   },
   RESCHEDULED: {
     label: '已改期',
-    className: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300/30 dark:border-amber-400/30',
+    bg: 'rgba(245,158,11,0.12)',
+    text: '#f59e0b',
+    border: 'rgba(245,158,11,0.3)',
   },
 };
 
@@ -44,39 +52,44 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
   onDelete,
   onStatusChange,
 }) => {
+  const sc = statusConfig[interview.status];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/50 dark:border-slate-700/50 rounded-2xl p-6 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 hover:-translate-y-0.5 transition-all"
+      className="card-container-interactive p-6"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-3">
-            <span className={`status-badge backdrop-blur-sm ${statusConfig[interview.status].className}`}>
-              {statusConfig[interview.status].label}
+            <span
+              className="status-badge px-2 py-0.5 rounded text-xs font-medium"
+              style={{backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}`}}
+            >
+              {sc.label}
             </span>
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            <span className="text-sm font-medium" style={{color: 'var(--color-muted)'}}>
               {dayjs(interview.interviewTime).format('YYYY-MM-DD HH:mm')}
             </span>
           </div>
 
-          <h3 className="font-display font-bold text-xl mb-2 text-slate-900 dark:text-white tracking-tight">
+          <h3 className="font-bold text-xl mb-2 tracking-tight" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>
             {interview.companyName}
           </h3>
-          <p className="text-slate-600 dark:text-slate-300 mb-3 font-medium">{interview.position}</p>
+          <p className="mb-3 font-medium" style={{color: 'var(--color-body-text)'}}>{interview.position}</p>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg font-medium">
+          <div className="flex flex-wrap items-center gap-3 text-sm" style={{color: 'var(--color-muted)'}}>
+            <span className="px-3 py-1 rounded-lg font-medium" style={{backgroundColor: 'var(--color-surface-soft)'}}>
               第 {interview.roundNumber} 轮
             </span>
-            <span className="text-slate-300 dark:text-slate-600">•</span>
+            <span style={{color: 'var(--color-hairline)'}}>•</span>
             <span className="font-medium">{typeLabels[interview.interviewType] || interview.interviewType}</span>
             {interview.interviewer && (
               <>
-                <span className="text-slate-300 dark:text-slate-600">•</span>
+                <span style={{color: 'var(--color-hairline)'}}>•</span>
                 <span className="font-medium">{interview.interviewer}</span>
               </>
             )}
@@ -88,7 +101,10 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
               href={interview.meetingLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mt-3 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium mt-3 transition-colors"
+              style={{color: 'var(--color-primary)'}}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.8'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
             >
               <ExternalLink className="w-4 h-4" />
               进入会议
@@ -96,7 +112,7 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
           )}
 
           {interview.notes && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-3 italic">{interview.notes}</p>
+            <p className="text-sm mt-3 italic" style={{color: 'var(--color-muted)'}}>{interview.notes}</p>
           )}
         </div>
 
@@ -105,7 +121,10 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onEdit}
-            className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-500/10 dark:hover:bg-primary-500/20 rounded-xl hover:shadow-lg hover:shadow-primary-500/20 transition-all"
+            className="p-2.5 rounded-lg transition-all"
+            style={{color: 'var(--color-muted)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(204,120,92,0.1)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
             title="编辑"
           >
             <Edit2 className="w-5 h-5" />
@@ -114,7 +133,10 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={onDelete}
-            className="p-2.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 rounded-xl hover:shadow-lg hover:shadow-red-500/20 transition-all"
+            className="p-2.5 rounded-lg transition-all"
+            style={{color: 'var(--color-muted)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(198,69,69,0.08)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
             title="删除"
           >
             <Trash2 className="w-5 h-5" />
@@ -126,13 +148,17 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex gap-3"
+          className="mt-4 pt-4 flex gap-3"
+          style={{borderTop: '1px solid var(--color-hairline)'}}
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStatusChange('COMPLETED')}
-            className="px-4 py-2 text-sm font-medium rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 border border-emerald-300/30 dark:border-emerald-400/30 transition-all"
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-all"
+            style={{backgroundColor: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.3)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(16,185,129,0.2)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(16,185,129,0.12)'; }}
           >
             标记为已完成
           </motion.button>
@@ -140,7 +166,10 @@ export const InterviewListItem: React.FC<InterviewListItemProps> = ({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStatusChange('CANCELLED')}
-            className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-500/10 dark:bg-slate-500/20 text-slate-700 dark:text-slate-300 hover:bg-slate-500/20 dark:hover:bg-slate-500/30 border border-slate-300/30 dark:border-slate-400/30 transition-all"
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-all"
+            style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-body-text)', border: '1px solid var(--color-hairline)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
           >
             取消面试
           </motion.button>

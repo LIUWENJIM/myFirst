@@ -18,13 +18,13 @@ export default function InterviewPageHeader({
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-center gap-3">
-        <div className="w-12 h-12 bg-gradient-to-br from-primary-500 via-primary-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
+      <h1 className="text-3xl mb-2 flex items-center justify-center gap-3" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)', fontWeight: 600}}>
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--color-primary)'}}>
           {icon}
         </div>
         {title}
       </h1>
-      <p className="text-slate-500 dark:text-slate-400">{subtitle}</p>
+      <p style={{color: 'var(--color-muted)'}}>{subtitle}</p>
     </motion.div>
   );
 }

@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequiredArgsConstructor
+@RequiredArgsConstructor//通过Lombok注解的方式注入
 @Tag(name = "简历管理", description = "简历上传、分析、导出与删除")
 public class ResumeController {
 

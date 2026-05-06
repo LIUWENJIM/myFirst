@@ -29,41 +29,41 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!open) return null;
 
-  const variantStyles = {
-    danger: 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700',
-    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700',
-    warning: 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+  const getVariantBg = () => {
+    switch (confirmVariant) {
+      case 'danger': return 'var(--color-error)';
+      case 'warning': return 'var(--color-warning)';
+      default: return 'var(--color-primary)';
+    }
   };
 
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* 背景遮罩 */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            exit={{opacity: 0}}
             onClick={onCancel}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50"
+            style={{backgroundColor: 'rgba(20,20,19,0.5)'}}
           />
 
-          {/* 对话框 */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{opacity: 0, scale: 0.95, y: 20}}
+              animate={{opacity: 1, scale: 1, y: 0}}
+              exit={{opacity: 0, scale: 0.95, y: 20}}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+              className="rounded-lg border max-w-md w-full p-6"
+              style={{backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-hairline)'}}
             >
-              {/* 标题 */}
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              <h3 className="text-base font-semibold mb-3" style={{color: 'var(--color-ink)'}}>
                 {title}
               </h3>
 
-              {/* 内容 */}
-                <div className="text-slate-600 dark:text-slate-300 mb-6">
+              <div className="text-sm mb-6" style={{color: 'var(--color-body-text)'}}>
                 {typeof message === 'string' ? (
                   message && <p className="whitespace-pre-line">{message}</p>
                 ) : (
@@ -72,31 +72,32 @@ export default function ConfirmDialog({
                 {customContent}
               </div>
 
-              {/* 按钮 */}
               {!hideButtons && (
                 <div className="flex gap-3 justify-end">
                   <motion.button
                     onClick={onCancel}
                     disabled={loading}
-                    className="px-5 py-2.5 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 border rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{borderColor: 'var(--color-hairline)', color: 'var(--color-body-text)'}}
+                    whileHover={{scale: 1.01}}
+                    whileTap={{scale: 0.99}}
                   >
                     {cancelText}
                   </motion.button>
                   <motion.button
                     onClick={onConfirm}
                     disabled={loading}
-                    className={`px-5 py-2.5 text-white rounded-xl font-semibold shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles[confirmVariant]}`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{backgroundColor: getVariantBg()}}
+                    whileHover={{scale: 1.01}}
+                    whileTap={{scale: 0.99}}
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
                         <motion.span
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block"
+                          animate={{rotate: 360}}
+                          transition={{duration: 1, repeat: Infinity, ease: "linear"}}
                         />
                         处理中...
                       </span>
@@ -113,4 +114,3 @@ export default function ConfirmDialog({
     </AnimatePresence>
   );
 }
-

@@ -52,7 +52,6 @@ export default function VoiceInterviewPage() {
 
   const [skills, setSkills] = useState<SkillDTO[]>([]);
 
-  // Refs
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const wsRef = useRef<VoiceInterviewWebSocket | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement>(null);
@@ -62,13 +61,11 @@ export default function VoiceInterviewPage() {
   const isAiSpeakingRef = useRef(false);
   const lastAiCommittedTextRef = useRef('');
   const pendingAiTextCommitRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Chunked audio playback refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const chunkQueueRef = useRef<AudioBuffer[]>([]);
   const isChunkPlayingRef = useRef(false);
   const chunkPlaybackSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const drainCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Ref to track latest aiText for async callbacks (avoids stale closure)
   const aiTextRef = useRef('');
   useEffect(() => { aiTextRef.current = aiText; }, [aiText]);
 
@@ -103,7 +100,6 @@ export default function VoiceInterviewPage() {
     setAiText(prev => prev?.trim() === normalized ? '' : prev);
   }, []);
 
-  // --- Chunked audio playback via AudioContext ---
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
       audioContextRef.current = new AudioContext({ sampleRate: 24000 });
@@ -186,19 +182,16 @@ export default function VoiceInterviewPage() {
     }
   }, [getAudioContext, playNextChunk, clearPendingAiTextCommit, commitAiMessage, setAiSpeaking]);
 
-  // Load skills for template name display
   useEffect(() => {
     skillApi.listSkills().then(setSkills).catch(console.error);
   }, []);
 
-  // Derive template name from skills
   useEffect(() => {
     if (skills.length > 0 && effectiveSkillId) {
       setTemplateName(getTemplateName(effectiveSkillId, skills));
     }
   }, [skills, effectiveSkillId]);
 
-  // Cleanup on unmount — 自动暂停未结束的 session
   useEffect(() => {
     return () => {
       if (timerRef.current) {
@@ -214,7 +207,6 @@ export default function VoiceInterviewPage() {
         drainCheckRef.current = null;
       }
       clearPendingAiTextCommit();
-      // 用户没有主动结束/暂停时，自动暂停 session
       const currentSessionId = sessionId;
       if (currentSessionId && !endedByUserRef.current) {
         voiceInterviewApi.pauseSession(currentSessionId).catch(() => {});
@@ -222,7 +214,6 @@ export default function VoiceInterviewPage() {
     };
   }, [clearPendingAiTextCommit, sessionId]);
 
-  // Start interview timer
   useEffect(() => {
     if (sessionId && connectionStatus === 'connected') {
       startTimer();
@@ -237,7 +228,6 @@ export default function VoiceInterviewPage() {
     };
   }, [sessionId, connectionStatus]);
 
-  // Auto-play audio when aiAudio changes
   useEffect(() => {
     if (aiAudio && audioPlayerRef.current) {
       const playPromise = audioPlayerRef.current.play();
@@ -273,7 +263,6 @@ export default function VoiceInterviewPage() {
     return phaseMap[phase] || phase;
   };
 
-  // 手动提交回答
   const handleSubmitAnswer = useCallback(() => {
     if (!wsRef.current || !wsRef.current.isConnected()) {
       return;
@@ -297,7 +286,6 @@ export default function VoiceInterviewPage() {
     },
     onMessage: () => {},
     onSubtitle: (text: string, isFinal: boolean) => {
-      // 手动提交模式下，isFinal=true 由 triggerLlmResponse 触发（提交用户消息到历史）
       if (isFinal && text.trim()) {
         setMessages(prev => {
           const last = prev[prev.length - 1];
@@ -437,7 +425,6 @@ export default function VoiceInterviewPage() {
     }
   }, [connectWithHandlers]);
 
-  // Auto-start: 新建 or 恢复
   useEffect(() => {
     if (autoStartRef.current) return;
 
@@ -459,7 +446,6 @@ export default function VoiceInterviewPage() {
     }
   }, [handlePhaseConfig, handleResumeSession, presetVoiceConfig, resumeSessionId]);
 
-  // 麦克风音频持续发送给服务端做 ASR（手动提交模式下不需要 blockade，回声不会触发 LLM）
   const handleAudioData = (audioData: string) => {
     if (wsRef.current && wsRef.current.isConnected()) {
       wsRef.current.sendAudio(audioData);
@@ -527,19 +513,19 @@ export default function VoiceInterviewPage() {
     navigate('/history');
   };
 
-  // 提交按钮是否可用
   const canSubmit = isRecording && !!userText.trim() && !isAiSpeaking && !isSubmitting && connectionStatus === 'connected';
 
   if (!autoStartRef.current && !presetVoiceConfig && !resumeSessionId) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-8 text-center max-w-md w-full">
+        <div className="card-container p-8 text-center max-w-md w-full">
           <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <p className="text-slate-700 dark:text-slate-200 text-lg font-semibold mb-2">未检测到语音面试配置</p>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">请从面试记录或"语音面试"入口开始</p>
+          <p className="text-lg font-semibold mb-2" style={{color: 'var(--color-ink)'}}>未检测到语音面试配置</p>
+          <p className="text-sm mb-6" style={{color: 'var(--color-muted)'}}>请从面试记录或"语音面试"入口开始</p>
           <button
             onClick={handleCloseModal}
-            className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/25 transition-all active:scale-[0.98]"
+            className="px-6 py-2.5 rounded-lg text-white font-medium transition-all active:scale-[0.98]"
+            style={{backgroundColor: 'var(--color-primary)'}}
           >
             返回重新开始
           </button>
@@ -558,7 +544,7 @@ export default function VoiceInterviewPage() {
         />
 
         {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded-xl flex items-center gap-2">
+          <div className="mb-6 px-4 py-3 rounded-lg flex items-center gap-2" style={{backgroundColor: 'rgba(198,69,69,0.08)', border: '1px solid rgba(198,69,69,0.2)', color: 'var(--color-error)'}}>
             <AlertCircle className="w-4 h-4" />
             <span className="text-sm">{error}</span>
           </div>
@@ -566,30 +552,31 @@ export default function VoiceInterviewPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-6">
+            <div className="card-container p-6">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate('/interviews')}
-                    className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
+                    className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                    style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-muted)'}}
                     title="返回面试记录"
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </button>
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{templateName || effectiveSkillId}</h2>
+                    <h2 className="text-lg font-semibold" style={{color: 'var(--color-ink)'}}>{templateName || effectiveSkillId}</h2>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs px-2 py-0.5 bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-300 rounded-full">
+                      <span className="text-xs px-2 py-0.5 rounded-full" style={{backgroundColor: 'rgba(204,120,92,0.12)', color: 'var(--color-primary)'}}>
                         {getPhaseLabel(currentPhase)}
                       </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                      <span className="text-xs" style={{color: 'var(--color-muted)'}}>
                         {connectionStatus === 'connected' ? '连接正常' : connectionStatus === 'connecting' ? '连接中' : '连接断开'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-body-text)'}}>
                   <Clock className="w-4 h-4" />
                   <span className="font-mono text-sm tabular-nums">{formatTime(currentTime)}</span>
                 </div>
@@ -599,16 +586,16 @@ export default function VoiceInterviewPage() {
                 <motion.div
                   animate={isAiSpeaking ? { scale: [1, 1.05, 1] } : {}}
                   transition={{ repeat: Infinity, duration: 2 }}
-                  className={`w-32 h-32 rounded-full border-4 flex items-center justify-center mb-6 transition-colors
-                    ${isAiSpeaking
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60'
-                    }`}
+                  className="w-32 h-32 rounded-full border-4 flex items-center justify-center mb-6 transition-colors"
+                  style={{
+                    borderColor: isAiSpeaking ? 'var(--color-primary)' : 'var(--color-hairline)',
+                    backgroundColor: isAiSpeaking ? 'rgba(204,120,92,0.08)' : 'var(--color-surface-soft)',
+                  }}
                 >
-                  <Bot className={`w-14 h-14 ${isAiSpeaking ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}`} />
+                  <Bot className="w-14 h-14" style={{color: isAiSpeaking ? 'var(--color-primary)' : 'var(--color-muted)'}} />
                 </motion.div>
 
-                <div className="w-full max-w-2xl min-h-[130px] rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-6 py-5 text-center flex items-center justify-center">
+                <div className="w-full max-w-2xl min-h-[130px] rounded-lg border px-6 py-5 text-center flex items-center justify-center" style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}>
                   <AnimatePresence mode="wait">
                     {isAiSpeaking || aiText ? (
                       <motion.p
@@ -616,7 +603,8 @@ export default function VoiceInterviewPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="text-lg md:text-xl font-medium text-slate-800 dark:text-slate-100 leading-relaxed"
+                        className="text-lg md:text-xl font-medium leading-relaxed"
+                        style={{color: 'var(--color-ink)'}}
                       >
                         {aiText || '思考中...'}
                       </motion.p>
@@ -626,7 +614,8 @@ export default function VoiceInterviewPage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="text-lg md:text-xl font-medium text-primary-600 dark:text-primary-300 italic leading-relaxed"
+                        className="text-lg md:text-xl font-medium italic leading-relaxed"
+                        style={{color: 'var(--color-primary)'}}
                       >
                         {userText}
                       </motion.p>
@@ -635,7 +624,7 @@ export default function VoiceInterviewPage() {
                         key="idle"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="text-slate-500 dark:text-slate-400"
+                        style={{color: 'var(--color-muted)'}}
                       >
                         {isRecording ? '正在聆听，说完后点击"提交回答"...' : '点击麦克风开始发言'}
                       </motion.p>
@@ -645,7 +634,7 @@ export default function VoiceInterviewPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm p-5">
+            <div className="card-container p-5">
               <div className="flex items-center justify-center gap-6">
                 <button
                   onClick={() => {
@@ -653,7 +642,8 @@ export default function VoiceInterviewPage() {
                     handlePause(choice ? 'short' : 'long');
                   }}
                   disabled={connectionStatus !== 'connected'}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-body-text)'}}
                   title="暂停"
                 >
                   暂停
@@ -670,11 +660,11 @@ export default function VoiceInterviewPage() {
                 <button
                   onClick={handleSubmitAnswer}
                   disabled={!canSubmit}
-                  className={`px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                    canSubmit
-                      ? 'bg-primary-500 text-white hover:bg-primary-600 shadow-md shadow-primary-500/30'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                  }`}
+                  className="px-5 py-2.5 rounded-lg font-medium text-sm transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: canSubmit ? 'var(--color-primary)' : 'var(--color-surface-soft)',
+                    color: canSubmit ? 'white' : 'var(--color-muted)',
+                  }}
                   title="提交回答"
                 >
                   <span className="inline-flex items-center gap-1.5">
@@ -686,7 +676,8 @@ export default function VoiceInterviewPage() {
                 <button
                   onClick={handleEndInterview}
                   disabled={connectionStatus !== 'connected'}
-                  className="px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  style={{backgroundColor: 'rgba(198,69,69,0.08)', color: 'var(--color-error)'}}
                   title="结束面试"
                 >
                   <span className="inline-flex items-center gap-1">
@@ -695,13 +686,13 @@ export default function VoiceInterviewPage() {
                   </span>
                 </button>
               </div>
-              <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-3">
+              <p className="text-center text-xs mt-3" style={{color: 'var(--color-muted)'}}>
                 {isAiSpeaking ? '面试官正在回答...' : isSubmitting ? '正在思考...' : isRecording ? '说完后点击"提交回答"' : '点击麦克风发言'}
               </p>
             </div>
           </div>
 
-          <div className="h-[520px] md:h-[560px] xl:h-[calc(100vh-240px)] xl:max-h-[760px] bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="h-[520px] md:h-[560px] xl:h-[calc(100vh-240px)] xl:max-h-[760px] card-container overflow-hidden">
             <RealtimeSubtitle
               messages={messages}
               userText={userText}

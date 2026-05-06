@@ -2,7 +2,6 @@ import { useState, lazy, Suspense } from 'react';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy } from 'lucide-react';
 
-// Lazy load SyntaxHighlighter
 const SyntaxHighlighter = lazy(() =>
   import('react-syntax-highlighter/dist/esm/prism').then(module => ({ default: module.default }))
 );
@@ -25,19 +24,20 @@ export default function CodeBlock({ language, children }: CodeBlockProps) {
     }
   };
 
-  // 清理代码内容
   const code = children?.trim() || '';
 
   return (
     <div className="relative group my-3">
-      {/* 语言标签和复制按钮 */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-700 rounded-t-xl border-b border-slate-600">
-        <span className="text-xs text-slate-400 font-mono">
+      <div className="flex items-center justify-between px-4 py-2 rounded-t-xl border-b" style={{backgroundColor: 'var(--color-surface-dark)', borderColor: 'rgba(255,255,255,0.1)'}}>
+        <span className="text-xs font-mono" style={{color: 'var(--color-muted)'}}>
           {language || 'code'}
         </span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+          className="flex items-center gap-1.5 px-2 py-1 text-xs rounded transition-colors"
+          style={{color: 'var(--color-muted)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.1)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           title="复制代码"
         >
           {copied ? (
@@ -54,10 +54,9 @@ export default function CodeBlock({ language, children }: CodeBlockProps) {
         </button>
       </div>
 
-      {/* 代码内容 */}
-      <div className="bg-[#282c34] rounded-b-xl text-sm leading-6">
+      <div className="rounded-b-xl text-sm leading-6" style={{backgroundColor: '#282c34'}}>
         <Suspense fallback={
-          <div className="p-4 text-slate-400 font-mono text-xs">Loading code...</div>
+          <div className="p-4 font-mono text-xs" style={{color: 'var(--color-muted)'}}>Loading code...</div>
         }>
           <SyntaxHighlighter
             language={language || 'text'}

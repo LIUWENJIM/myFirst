@@ -76,7 +76,6 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   const loadKnowledgeBases = async () => {
     setLoadingList(true);
     try {
-      // 问答助手只显示向量化完成的知识库
       const list = await knowledgeBaseApi.getAllKnowledgeBases(sortBy, 'COMPLETED');
       setKnowledgeBases(list);
     } catch (err) {
@@ -242,15 +241,10 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
   const formatMarkdown = (text: string): string => {
     if (!text) return '';
     return text
-      // 处理转义换行符
       .replace(/\\n/g, '\n')
-      // 确保标题 # 后有空格
       .replace(/^(#{1,6})([^\s#\n])/gm, '$1 $2')
-      // 确保有序列表数字后有空格（如 1.xxx -> 1. xxx）
       .replace(/^(\s*)(\d+)\.([^\s\n])/gm, '$1$2. $3')
-      // 确保无序列表 - 或 * 后有空格
       .replace(/^(\s*[-*])([^\s\n-])/gm, '$1 $2')
-      // 压缩多余空行
       .replace(/\n{3,}/g, '\n\n');
   };
 
@@ -362,26 +356,32 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       {/* 头部 */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3 mb-1">
-            <MessageSquare className="w-7 h-7 text-primary-500" />
+          <h1 className="text-2xl font-bold flex items-center gap-3 mb-1" style={{color: 'var(--color-ink)'}}>
+            <MessageSquare className="w-7 h-7" style={{color: 'var(--color-primary)'}} />
             问答助手
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm ml-10">选择知识库，向 AI 提问</p>
+          <p className="text-sm ml-10" style={{color: 'var(--color-muted)'}}>选择知识库，向 AI 提问</p>
         </div>
         <div className="flex gap-3">
           <motion.button
             onClick={onUpload}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm"
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{border: '1px solid var(--color-hairline)', color: 'var(--color-body-text)'}}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             上传知识库
           </motion.button>
           <motion.button
             onClick={onBack}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-sm"
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{border: '1px solid var(--color-hairline)', color: 'var(--color-body-text)'}}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             返回
           </motion.button>
@@ -391,16 +391,18 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
       <div className="flex gap-4 h-[calc(100vh-10rem)]">
         {/* 左侧：对话历史 */}
         <div className="w-64 flex-shrink-0">
-          <div
-              className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col border border-slate-100 dark:border-slate-700">
+          <div className="card-container p-4 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-slate-800 dark:text-white">对话历史</h2>
+              <h2 className="text-base font-semibold" style={{color: 'var(--color-ink)'}}>对话历史</h2>
               <motion.button
                 onClick={handleNewSession}
                 disabled={selectedKbIds.size === 0}
-                className="p-1.5 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{color: 'var(--color-primary)'}}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(204,120,92,0.1)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 title="新建对话"
               >
                 <Plus className="w-5 h-5" />
@@ -411,13 +413,14 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
               {loadingSessions ? (
                 <div className="text-center py-6">
                   <motion.div
-                    className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto"
+                    className="w-5 h-5 border rounded-full mx-auto"
+                    style={{borderColor: 'var(--color-primary)', borderTopColor: 'transparent'}}
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                   />
                 </div>
               ) : sessions.length === 0 ? (
-                  <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-sm">
+                <div className="text-center py-6 text-sm" style={{color: 'var(--color-muted)'}}>
                   暂无对话历史
                 </div>
               ) : (
@@ -426,40 +429,44 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                     <div
                       key={session.id}
                       onClick={() => handleLoadSession(session.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all group ${currentSessionId === session.id
-                          ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-500'
-                          : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 border border-transparent'
-                        } ${session.isPinned ? 'border-l-4 border-l-primary-500' : ''}`}
+                      className="p-3 rounded-lg cursor-pointer transition-all group"
+                      style={{
+                        backgroundColor: currentSessionId === session.id ? 'rgba(204,120,92,0.1)' : 'var(--color-surface-soft)',
+                        border: currentSessionId === session.id ? '1px solid var(--color-primary)' : (session.isPinned ? '1px solid rgba(204,120,92,0.3)' : '1px solid transparent'),
+                      }}
+                      onMouseEnter={e => { if (currentSessionId !== session.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
+                      onMouseLeave={e => { if (currentSessionId !== session.id) (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(204,120,92,0.1)'; }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
                             {session.isPinned && (
-                              <Pin className="w-3.5 h-3.5 text-primary-500 fill-primary-500 flex-shrink-0" />
+                              <Pin className="w-3.5 h-3.5 flex-shrink-0" style={{color: 'var(--color-primary)', fill: 'var(--color-primary)'}} />
                             )}
-                            <p className="font-medium text-slate-800 dark:text-white text-sm truncate">{session.title}</p>
+                            <p className="font-medium text-sm truncate" style={{color: 'var(--color-ink)'}}>{session.title}</p>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs mt-1" style={{color: 'var(--color-muted)'}}>
                             {session.messageCount} 条消息 · {formatTimeAgo(session.updatedAt)}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button
                             onClick={(e) => handleTogglePin(session.id, e)}
-                            className={`p-1 rounded transition-colors ${session.isPinned
-                              ? 'text-primary-500 hover:text-primary-600'
-                              : 'text-slate-400 hover:text-primary-500'
-                              }`}
+                            className="p-1 rounded transition-colors"
+                            style={{color: session.isPinned ? 'var(--color-primary)' : 'var(--color-muted)'}}
                             title={session.isPinned ? '取消置顶' : '置顶'}
                           >
-                            <Pin className={`w-4 h-4 ${session.isPinned ? 'fill-primary-500' : ''}`} />
+                            <Pin className="w-4 h-4" style={session.isPinned ? {fill: 'var(--color-primary)'} : undefined} />
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditSessionTitle(session.id, session.title);
                             }}
-                            className="p-1 text-slate-400 hover:text-primary-500 rounded transition-colors"
+                            className="p-1 rounded transition-colors"
+                            style={{color: 'var(--color-muted)'}}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
                             title="编辑标题"
                           >
                             <Edit className="w-4 h-4" />
@@ -469,7 +476,10 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                               e.stopPropagation();
                               setSessionDeleteConfirm({ id: session.id, title: session.title });
                             }}
-                            className="p-1 text-slate-400 hover:text-red-500 rounded transition-colors"
+                            className="p-1 rounded transition-colors"
+                            style={{color: 'var(--color-muted)'}}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
                             title="删除"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -486,13 +496,12 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
 
         {/* 中间：聊天区域 */}
         <div className="flex-1 min-w-0">
-          <div
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex flex-col h-full border border-slate-100 dark:border-slate-700">
+          <div className="card-container flex flex-col h-full">
             {selectedKbIds.size > 0 ? (
               <>
                 {/* 会话信息 */}
-                <div className="p-4 border-b border-slate-200 dark:border-slate-600">
-                  <h2 className="text-base font-semibold text-slate-800 dark:text-white">
+                <div className="p-4" style={{borderBottom: '1px solid var(--color-hairline)'}}>
+                  <h2 className="text-base font-semibold" style={{color: 'var(--color-ink)'}}>
                     {currentSessionTitle || (selectedKbIds.size === 1
                       ? knowledgeBases.find(kb => kb.id === Array.from(selectedKbIds)[0])?.name || '新对话'
                       : `${selectedKbIds.size} 个知识库 - 新对话`)}
@@ -501,8 +510,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                     {Array.from(selectedKbIds).map(kbId => {
                       const kb = knowledgeBases.find(k => k.id === kbId);
                       return kb ? (
-                          <span key={kbId}
-                                className="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 text-xs rounded-full">
+                        <span key={kbId} className="px-2 py-0.5 text-xs rounded-full" style={{backgroundColor: 'rgba(204,120,92,0.12)', color: 'var(--color-primary)'}}>
                           {kb.name}
                         </span>
                       ) : null;
@@ -511,10 +519,9 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 </div>
 
                 {/* 消息列表 */}
-                <div className="flex-1 min-h-0 relative dark:bg-slate-800">
+                <div className="flex-1 min-h-0 relative">
                   {messages.length === 0 ? (
-                      <div
-                          className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center" style={{color: 'var(--color-muted)'}}>
                       <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">开始提问吧！</p>
                     </div>
@@ -526,54 +533,52 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       followOutput="smooth"
                       className="h-full w-full"
                       itemContent={(index, msg) => (
-                          <div className="pb-4 px-4 first:pt-4 dark:bg-slate-800">
+                        <div className="pb-4 px-4 first:pt-4">
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                           >
                             <div
-                              className={`max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.type === 'user'
-                                ? 'bg-primary-600 text-white'
-                                  : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-600 text-slate-800 dark:text-slate-100'
-                              }`}
+                              className="max-w-[85%] rounded-lg p-4"
+                              style={
+                                msg.type === 'user'
+                                  ? { backgroundColor: 'var(--color-primary)', color: 'white' }
+                                  : { backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-hairline)', color: 'var(--color-ink)' }
+                              }
                             >
                               {msg.type === 'user' ? (
                                 <p className="whitespace-pre-wrap leading-relaxed text-sm">{msg.content}</p>
                               ) : (
-                                  <div className="prose prose-slate dark:prose-invert prose-sm max-w-none">
+                                <div className="prose prose-sm max-w-none" style={{color: 'var(--color-ink)'}}>
                                   <ReactMarkdown
                                     remarkPlugins={[remarkGfm]}
                                     components={{
-                                      // 自定义代码块渲染
                                       code: ({ className, children }) => {
                                         const match = /language-(\w+)/.exec(className || '');
                                         const isInline = !match;
 
                                         if (isInline) {
                                           return (
-                                              <code
-                                                  className="bg-slate-100 dark:bg-slate-600 text-primary-600 dark:text-primary-400 px-1.5 py-0.5 rounded-md text-sm font-normal">
+                                            <code className="px-1.5 py-0.5 rounded-md text-sm font-normal" style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-primary)'}}>
                                               {children}
                                             </code>
                                           );
                                         }
 
-                                        // 代码块使用 CodeBlock 组件
                                         return (
                                           <CodeBlock language={match[1]}>
                                             {String(children).replace(/\n$/, '')}
                                           </CodeBlock>
                                         );
                                       },
-                                      // 禁用默认 pre 渲染，由 CodeBlock 处理
                                       pre: ({ children }) => <>{children}</>,
                                     }}
                                   >
                                     {formatMarkdown(msg.content)}
                                   </ReactMarkdown>
                                   {loading && index === messages.length - 1 && (
-                                    <span className="inline-block w-0.5 h-5 bg-primary-500 ml-1 animate-pulse" />
+                                    <span className="inline-block w-0.5 h-5 ml-1 animate-pulse" style={{backgroundColor: 'var(--color-primary)'}} />
                                   )}
                                 </div>
                               )}
@@ -586,7 +591,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 </div>
 
                 {/* 输入区域 */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-600">
+                <div className="p-4" style={{borderTop: '1px solid var(--color-hairline)'}}>
                   <div className="flex gap-3">
                     <input
                       type="text"
@@ -594,13 +599,15 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       onChange={(e) => setQuestion(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSubmitQuestion()}
                       placeholder="输入您的问题..."
-                      className="flex-1 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                      className="flex-1 px-4 py-2.5 rounded-lg focus:outline-none text-sm"
+                      style={{border: '1px solid var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)'}}
                       disabled={loading}
                     />
                     <motion.button
                       onClick={handleSubmitQuestion}
                       disabled={!question.trim() || selectedKbIds.size === 0 || loading}
-                      className="px-5 py-2.5 bg-primary-500 text-white rounded-xl font-medium hover:bg-primary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      className="px-5 py-2.5 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      style={{backgroundColor: 'var(--color-primary)'}}
                       whileHover={{ scale: loading ? 1 : 1.02 }}
                       whileTap={{ scale: loading ? 1 : 0.98 }}
                     >
@@ -610,7 +617,7 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 </div>
               </>
             ) : (
-                <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500">
+              <div className="flex-1 flex items-center justify-center" style={{color: 'var(--color-muted)'}}>
                 <div className="text-center">
                   <svg className="w-12 h-12 mx-auto mb-3 opacity-50" viewBox="0 0 24 24" fill="none">
                     <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -632,13 +639,15 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
               transition={{ duration: 0.2 }}
               className="flex-shrink-0 overflow-hidden"
             >
-              <div
-                  className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm h-full flex flex-col w-[280px] border border-slate-100 dark:border-slate-700">
+              <div className="card-container p-4 h-full flex flex-col w-[280px]">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-semibold text-slate-800 dark:text-white">选择知识库</h2>
+                  <h2 className="text-base font-semibold" style={{color: 'var(--color-ink)'}}>选择知识库</h2>
                   <button
                     onClick={() => setRightPanelOpen(false)}
-                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded"
+                    className="p-1 rounded"
+                    style={{color: 'var(--color-muted)'}}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-body-text)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -652,11 +661,13 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                     onChange={(e) => setSearchKeyword(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     placeholder="搜索..."
-                    className="flex-1 px-3 py-1.5 text-sm border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                    className="flex-1 px-3 py-1.5 text-sm rounded-lg focus:outline-none"
+                    style={{border: '1px solid var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)'}}
                   />
                   <button
                     onClick={handleSearch}
-                    className="px-3 py-1.5 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600"
+                    className="px-3 py-1.5 text-sm text-white rounded-lg"
+                    style={{backgroundColor: 'var(--color-primary)'}}
                   >
                     搜索
                   </button>
@@ -670,7 +681,8 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       setSortBy(e.target.value as SortOption);
                       setSearchKeyword('');
                     }}
-                    className="w-full px-2 py-1 text-xs border border-slate-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                    className="w-full px-2 py-1 text-xs rounded-lg focus:outline-none"
+                    style={{border: '1px solid var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-body-text)'}}
                   >
                     <option value="time">时间排序</option>
                     <option value="size">大小排序</option>
@@ -684,16 +696,17 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                   {loadingList ? (
                     <div className="text-center py-6">
                       <motion.div
-                        className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full mx-auto"
+                        className="w-5 h-5 border rounded-full mx-auto"
+                        style={{borderColor: 'var(--color-primary)', borderTopColor: 'transparent'}}
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       />
                     </div>
                   ) : knowledgeBases.length === 0 ? (
-                      <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+                    <div className="text-center py-6" style={{color: 'var(--color-muted)'}}>
                       <p className="mb-2 text-sm">{searchKeyword ? '未找到' : '暂无知识库'}</p>
                       {!searchKeyword && (
-                        <button onClick={onUpload} className="text-primary-500 hover:text-primary-600 font-medium text-sm">
+                        <button onClick={onUpload} className="text-sm font-medium" style={{color: 'var(--color-primary)'}}>
                           立即上传
                         </button>
                       )}
@@ -701,20 +714,22 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                   ) : (
                     <div className="space-y-2">
                       {groupedKnowledgeBases.map((group) => (
-                          <div key={group.name}
-                               className="border border-slate-100 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <div key={group.name} className="rounded-lg overflow-hidden" style={{border: '1px solid var(--color-hairline)'}}>
                           <button
                             onClick={() => toggleCategory(group.name)}
-                            className="w-full flex items-center justify-between px-3 py-2 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                            className="w-full flex items-center justify-between px-3 py-2 transition-colors"
+                            style={{backgroundColor: 'var(--color-surface-soft)'}}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
                           >
                             <div className="flex items-center gap-2">
                               <ChevronRight
-                                className={`w-3.5 h-3.5 text-slate-400 transition-transform ${group.isExpanded ? 'rotate-90' : ''}`}
+                                className={`w-3.5 h-3.5 transition-transform ${group.isExpanded ? 'rotate-90' : ''}`}
+                                style={{color: 'var(--color-muted)'}}
                               />
-                              <span
-                                  className="font-medium text-slate-700 dark:text-slate-300 text-sm">{group.name}</span>
+                              <span className="font-medium text-sm" style={{color: 'var(--color-body-text)'}}>{group.name}</span>
                             </div>
-                            <span className="text-xs text-slate-400">{group.items.length}</span>
+                            <span className="text-xs" style={{color: 'var(--color-muted)'}}>{group.items.length}</span>
                           </button>
 
                           <AnimatePresence>
@@ -731,10 +746,13 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                                     <div
                                       key={kb.id}
                                       onClick={() => handleToggleKb(kb.id)}
-                                      className={`p-2 rounded-lg cursor-pointer transition-all ${selectedKbIds.has(kb.id)
-                                          ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-500'
-                                          : 'bg-white dark:bg-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700 border border-transparent'
-                                        }`}
+                                      className="p-2 rounded-lg cursor-pointer transition-all"
+                                      style={{
+                                        backgroundColor: selectedKbIds.has(kb.id) ? 'rgba(204,120,92,0.1)' : 'var(--color-surface-card)',
+                                        border: selectedKbIds.has(kb.id) ? '1px solid var(--color-primary)' : '1px solid transparent',
+                                      }}
+                                      onMouseEnter={e => { if (!selectedKbIds.has(kb.id)) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+                                      onMouseLeave={e => { if (!selectedKbIds.has(kb.id)) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
                                     >
                                       <div className="flex items-center gap-2">
                                         <input
@@ -742,12 +760,12 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                                           checked={selectedKbIds.has(kb.id)}
                                           onChange={() => handleToggleKb(kb.id)}
                                           onClick={(e) => e.stopPropagation()}
-                                          className="w-3.5 h-3.5 text-primary-500 rounded focus:ring-primary-500"
+                                          className="w-3.5 h-3.5 rounded"
+                                          style={{accentColor: 'var(--color-primary)'}}
                                         />
-                                        <span
-                                            className="font-medium text-slate-800 dark:text-white text-xs truncate flex-1">{kb.name}</span>
+                                        <span className="font-medium text-xs truncate flex-1" style={{color: 'var(--color-ink)'}}>{kb.name}</span>
                                       </div>
-                                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 ml-5">{formatFileSize(kb.fileSize)}</p>
+                                      <p className="text-xs mt-0.5 ml-5" style={{color: 'var(--color-muted)'}}>{formatFileSize(kb.fileSize)}</p>
                                     </div>
                                   ))}
                                 </div>
@@ -768,10 +786,12 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
         {!rightPanelOpen && (
           <button
             onClick={() => setRightPanelOpen(true)}
-            className="flex-shrink-0 w-10 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="flex-shrink-0 w-10 card-container flex items-center justify-center transition-colors"
             title="展开知识库面板"
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
           >
-            <ChevronRight className="w-5 h-5 text-slate-400" />
+            <ChevronRight className="w-5 h-5" style={{color: 'var(--color-muted)'}} />
           </button>
         )}
       </div>
@@ -797,7 +817,8 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 setEditingSessionTitle(null);
                 setNewSessionTitle('');
               }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              className="fixed inset-0 z-50"
+              style={{backgroundColor: 'rgba(20,20,19,0.5)'}}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
@@ -805,16 +826,17 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-slate-700"
+                className="card-container max-w-md w-full p-6"
               >
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">编辑标题</h3>
+                <h3 className="text-xl font-bold mb-4" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>编辑标题</h3>
                 <input
                   type="text"
                   value={newSessionTitle}
                   onChange={(e) => setNewSessionTitle(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSaveSessionTitle()}
                   placeholder="请输入新标题"
-                  className="w-full px-4 py-3 text-sm border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 mb-4 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400"
+                  className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none mb-4"
+                  style={{border: '1px solid var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)'}}
                   autoFocus
                 />
                 <div className="flex justify-end gap-3">
@@ -823,14 +845,18 @@ export default function KnowledgeBaseQueryPage({ onBack, onUpload }: KnowledgeBa
                       setEditingSessionTitle(null);
                       setNewSessionTitle('');
                     }}
-                    className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                    className="px-4 py-2 text-sm"
+                    style={{color: 'var(--color-muted)'}}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
                   >
                     取消
                   </button>
                   <button
                     onClick={handleSaveSessionTitle}
                     disabled={!newSessionTitle.trim()}
-                    className="px-4 py-2 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 disabled:opacity-50"
+                    className="px-4 py-2 text-sm text-white rounded-lg disabled:opacity-50"
+                    style={{backgroundColor: 'var(--color-primary)'}}
                   >
                     保存
                   </button>

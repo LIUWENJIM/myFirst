@@ -18,9 +18,6 @@ interface InterviewPanelProps {
   loadingInterview: boolean;
 }
 
-/**
- * 面试记录面板组件
- */
 export default function InterviewPanel({
   interviews,
   onStartInterview,
@@ -34,7 +31,7 @@ export default function InterviewPanel({
   const [deleteConfirm, setDeleteConfirm] = useState<{ sessionId: string } | null>(null);
 
   const handleDeleteClick = (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // 阻止触发卡片点击事件
+    e.stopPropagation();
     setDeleteConfirm({ sessionId });
   };
 
@@ -54,7 +51,6 @@ export default function InterviewPanel({
     }
   };
 
-  // 准备图表数据
   const chartData = useMemo(() => {
     return interviews
       .filter(i => i.overallScore !== null)
@@ -68,16 +64,16 @@ export default function InterviewPanel({
 
   if (interviews.length === 0) {
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center">
-          <div
-              className="w-16 h-16 mx-auto mb-6 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-          <Mic className="w-8 h-8 text-slate-400" />
+      <div className="card-container p-12 text-center">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full flex items-center justify-center" style={{backgroundColor: 'var(--color-surface-soft)'}}>
+          <Mic className="w-8 h-8" style={{color: 'var(--color-muted)'}} />
         </div>
-          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">暂无面试记录</h3>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">开始模拟面试，获取专业评估</p>
+        <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>暂无面试记录</h3>
+        <p className="mb-6" style={{color: 'var(--color-muted)'}}>开始模拟面试，获取专业评估</p>
         <motion.button
           onClick={onStartInterview}
-          className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium shadow-lg shadow-primary-500/30"
+          className="px-6 py-3 rounded-lg font-medium text-white"
+          style={{backgroundColor: 'var(--color-primary)'}}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -89,27 +85,27 @@ export default function InterviewPanel({
 
   return (
     <div className="space-y-6">
-      {/* 面试表现趋势图 */}
+      {/* Chart */}
       {chartData.length > 0 && (
-          <motion.div
-              className="bg-white dark:bg-slate-800 rounded-2xl p-6"
+        <motion.div
+          className="card-container p-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary-500" />
-              <span className="font-semibold text-slate-800 dark:text-white">面试表现趋势</span>
+              <TrendingUp className="w-5 h-5" style={{color: 'var(--color-primary)'}} />
+              <span className="font-semibold" style={{color: 'var(--color-ink)'}}>面试表现趋势</span>
             </div>
-            <span className="text-sm text-slate-500 dark:text-slate-400">共 {chartData.length} 场练习</span>
+            <span className="text-sm" style={{color: 'var(--color-muted)'}}>共 {chartData.length} 场练习</span>
           </div>
 
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700"/>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
                 <XAxis
-                    dataKey="name"
+                  dataKey="name"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#94a3b8', fontSize: 12 }}
@@ -121,21 +117,21 @@ export default function InterviewPanel({
                   tick={{ fill: '#94a3b8', fontSize: 12 }}
                 />
                 <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                    border: '1px solid #e2e8f0',
+                  contentStyle={{
+                    backgroundColor: 'var(--color-surface-card)',
+                    border: '1px solid var(--color-hairline)',
                     borderRadius: '12px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                   }}
                   formatter={(value) => [`${value} 分`, '得分']}
                 />
                 <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#6366f1"
+                  type="monotone"
+                  dataKey="score"
+                  stroke="var(--color-primary)"
                   strokeWidth={3}
-                  dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
-                  activeDot={{ r: 8, fill: '#6366f1' }}
+                  dot={{ fill: 'var(--color-primary)', strokeWidth: 2, r: 5 }}
+                  activeDot={{ r: 8, fill: 'var(--color-primary)' }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -143,15 +139,15 @@ export default function InterviewPanel({
         </motion.div>
       )}
 
-      {/* 历史面试场次 */}
+      {/* History */}
       <motion.div
-          className="bg-white dark:bg-slate-800 rounded-2xl p-6"
+        className="card-container p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
         <div className="flex items-center justify-between mb-6">
-          <span className="font-semibold text-slate-800 dark:text-white">历史面试场次</span>
+          <span className="font-semibold" style={{color: 'var(--color-ink)'}}>历史面试场次</span>
         </div>
 
         <div className="space-y-4">
@@ -170,7 +166,6 @@ export default function InterviewPanel({
           ))}
         </div>
 
-        {/* 删除确认对话框 */}
         <ConfirmDialog
           open={deleteConfirm !== null}
           title="删除面试记录"
@@ -184,14 +179,15 @@ export default function InterviewPanel({
         />
 
         {loadingInterview && (
-            <div className="fixed inset-0 bg-black/20 dark:bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 flex items-center gap-4">
-                <motion.div
-                    className="w-8 h-8 border-3 border-slate-200 dark:border-slate-600 border-t-primary-500 rounded-full"
+          <div className="fixed inset-0 flex items-center justify-center z-50" style={{backgroundColor: 'rgba(0,0,0,0.2)'}}>
+            <div className="card-container p-6 flex items-center gap-4">
+              <motion.div
+                className="w-8 h-8 border-3 rounded-full"
+                style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}}
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
-                <span className="text-slate-600 dark:text-slate-300">加载面试详情...</span>
+              <span style={{color: 'var(--color-body-text)'}}>加载面试详情...</span>
             </div>
           </div>
         )}
@@ -200,7 +196,6 @@ export default function InterviewPanel({
   );
 }
 
-// 面试项卡片组件
 function InterviewItemCard({
   interview,
   index,
@@ -226,23 +221,26 @@ function InterviewItemCard({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1 }}
       onClick={onView}
-      className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer transition-colors group"
+      className="flex items-center gap-4 p-4 rounded-lg cursor-pointer transition-colors group"
+      style={{backgroundColor: 'var(--color-surface-soft)'}}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
     >
-      {/* 得分 */}
       <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg ${
-        interview.overallScore !== null 
+        interview.overallScore !== null
           ? getScoreColor(interview.overallScore, [85, 70])
-            : 'bg-slate-100 dark:bg-slate-600 text-slate-400'
-      }`}>
+          : ''
+      }`}
+        style={interview.overallScore === null ? {backgroundColor: 'var(--color-surface-card)', color: 'var(--color-muted)'} : undefined}
+      >
         {interview.overallScore ?? '-'}
       </div>
 
-      {/* 信息 */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-800 dark:text-white truncate">
+        <p className="font-medium truncate" style={{color: 'var(--color-ink)'}}>
           模拟面试 #{total - index}
         </p>
-        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-4 text-sm" style={{color: 'var(--color-muted)'}}>
           <span className="flex items-center gap-1">
             <Calendar className="w-4 h-4" />
             {formatDateOnly(interview.createdAt)}
@@ -254,29 +252,33 @@ function InterviewItemCard({
         </div>
       </div>
 
-      {/* 操作按钮 */}
       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100">
-      {/* 导出按钮 */}
-      <motion.button
-        onClick={(e) => { e.stopPropagation(); onExport(); }}
-        disabled={exporting}
-        className="px-3 py-2 text-slate-400 hover:text-primary-500 hover:bg-white dark:hover:bg-slate-600 rounded-lg transition-all"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Download className="w-5 h-5" />
-      </motion.button>
+        <motion.button
+          onClick={(e) => { e.stopPropagation(); onExport(); }}
+          disabled={exporting}
+          className="p-2 rounded-lg transition-all"
+          style={{color: 'var(--color-muted)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-card)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Download className="w-5 h-5" />
+        </motion.button>
 
-        {/* 删除按钮 */}
         <button
           onClick={onDelete}
           disabled={deleting}
-          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-lg transition-colors disabled:opacity-50"
+          style={{color: 'var(--color-muted)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(198,69,69,0.08)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           title="删除面试记录"
         >
           {deleting ? (
             <motion.div
-              className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full"
+              className="w-5 h-5 border rounded-full"
+              style={{borderColor: 'var(--color-error)', borderTopColor: 'transparent'}}
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             />
@@ -286,9 +288,10 @@ function InterviewItemCard({
         </button>
       </div>
 
-      {/* 箭头 */}
       <ChevronRight
-          className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all flex-shrink-0"/>
+        className="w-5 h-5 flex-shrink-0 transition-all"
+        style={{color: 'var(--color-hairline)'}}
+      />
     </motion.div>
   );
 }

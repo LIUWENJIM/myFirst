@@ -6,7 +6,7 @@ import {historyApi, ResumeListItem} from '../api/history';
 import DeleteConfirmDialog from '../components/DeleteConfirmDialog';
 import {formatDateOnly} from '../utils/date';
 import {getScoreProgressColor} from '../utils/score';
-import { ROUTES } from '../constants/routes';
+import {ROUTES} from '../constants/routes';
 
 interface HistoryListProps {
   onSelectResume: (id: number) => void;
@@ -17,10 +17,10 @@ function isAnalyzing(status?: string): boolean {
 }
 
 function AnalyzeStatusIcon({status}: { status?: string }) {
-  if (status === 'FAILED') return <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400"/>;
-  if (isAnalyzing(status)) return <RefreshCw className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin"/>;
-  if (status === 'COMPLETED') return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400"/>;
-  return <Clock className="w-4 h-4 text-yellow-500 dark:text-yellow-400"/>;
+  if (status === 'FAILED') return <AlertCircle className="w-4 h-4" style={{color: 'var(--color-error)'}}/>;
+  if (isAnalyzing(status)) return <RefreshCw className="w-4 h-4 animate-spin" style={{color: 'var(--color-primary)'}}/>;
+  if (status === 'COMPLETED') return <CheckCircle className="w-4 h-4" style={{color: 'var(--color-success)'}}/>;
+  return <Clock className="w-4 h-4" style={{color: 'var(--color-warning)'}}/>;
 }
 
 function getAnalyzeStatusText(status?: string): string {
@@ -35,8 +35,8 @@ function resumesEqual(a: ResumeListItem[], b: ResumeListItem[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i].id !== b[i].id ||
-        a[i].analyzeStatus !== b[i].analyzeStatus ||
-        a[i].latestScore !== b[i].latestScore) return false;
+      a[i].analyzeStatus !== b[i].analyzeStatus ||
+      a[i].latestScore !== b[i].latestScore) return false;
   }
   return true;
 }
@@ -68,7 +68,6 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
     loadResumes();
   }, [loadResumes]);
 
-  // 轮询：有分析中的简历时启动 3s 轮询
   const hasAnalyzing = resumes.some(r => isAnalyzing(r.analyzeStatus));
 
   useEffect(() => {
@@ -84,7 +83,6 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm) return;
-
     const {id} = deleteConfirm;
     setDeletingId(id);
     try {
@@ -111,40 +109,57 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
       {/* 头部 */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-            <FileStack className="w-7 h-7 text-primary-500" />
+          <h1 className="page-title flex items-center gap-2.5">
+            <FileStack className="w-5 h-5" style={{color: 'var(--color-primary)'}}/>
             简历管理
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">管理您的简历，AI 智能分析与评分</p>
+          <p className="page-subtitle">管理您的简历，AI 智能分析与评分</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => navigate(ROUTES.resumeUpload)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/25 transition-all duration-200 active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+            style={{backgroundColor: 'var(--color-primary)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-active)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4"/>
             上传简历
           </button>
           <button
             onClick={() => navigate('/interview-hub')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all duration-200 active:scale-[0.98]"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors"
+            style={{
+              backgroundColor: 'var(--color-canvas)',
+              color: 'var(--color-body-text)',
+              borderColor: 'var(--color-hairline)',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-canvas)'; }}
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4"/>
             模拟面试
           </button>
         </div>
       </div>
 
       {/* 搜索栏 */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 max-w-md focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-500/15 dark:focus-within:ring-primary-400/15 transition-all duration-200">
-          <Search className="w-5 h-5 text-slate-400" />
+      <div className="mb-5">
+        <div
+          className="flex items-center gap-2.5 border rounded-lg px-3 py-2 max-w-sm transition-all"
+          style={{
+            backgroundColor: 'var(--color-surface-card)',
+            borderColor: 'var(--color-hairline)',
+          }}
+        >
+          <Search className="w-4 h-4" style={{color: 'var(--color-muted-soft)'}}/>
           <input
             type="text"
             placeholder="搜索简历..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 bg-transparent text-sm"
+            className="flex-1 outline-none text-sm bg-transparent"
+            style={{color: 'var(--color-ink)'}}
           />
         </div>
       </div>
@@ -153,11 +168,12 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
       {loading && (
         <div className="text-center py-20">
           <motion.div
-            className="w-10 h-10 border-3 border-slate-200 dark:text-slate-200 border-t-primary-500 rounded-full mx-auto mb-4"
+            className="w-8 h-8 border-2 rounded-full mx-auto mb-4"
+            style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}}
             animate={{rotate: 360}}
             transition={{duration: 1, repeat: Infinity, ease: "linear"}}
           />
-          <p className="text-slate-500 dark:text-slate-400">加载中...</p>
+          <p className="text-sm" style={{color: 'var(--color-muted)'}}>加载中...</p>
         </div>
       )}
 
@@ -165,14 +181,17 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
       {!loading && filteredResumes.length === 0 && (
         <motion.div
           className="empty-state"
-          initial={{opacity: 0, scale: 0.95}}
+          initial={{opacity: 0, scale: 0.97}}
           animate={{opacity: 1, scale: 1}}
         >
-          <div className="w-16 h-16 mx-auto mb-5 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center">
-            <FileText className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+          <div
+            className="w-14 h-14 mx-auto mb-4 rounded-lg flex items-center justify-center"
+            style={{backgroundColor: 'var(--color-surface-soft)'}}
+          >
+            <FileText className="w-7 h-7" style={{color: 'var(--color-muted-soft)'}}/>
           </div>
-          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">暂无简历记录</h3>
-          <p className="text-slate-500 dark:text-slate-400">上传简历开始您的第一次 AI 面试分析</p>
+          <h3 className="text-base font-semibold mb-1.5" style={{color: 'var(--color-body-text)'}}>暂无简历记录</h3>
+          <p className="text-sm" style={{color: 'var(--color-muted)'}}>上传简历开始您的第一次 AI 面试分析</p>
         </motion.div>
       )}
 
@@ -180,19 +199,19 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
       {!loading && filteredResumes.length > 0 && (
         <motion.div
           className="table-container"
-          initial={{opacity: 0, y: 20}}
+          initial={{opacity: 0, y: 12}}
           animate={{opacity: 1, y: 0}}
-          transition={{delay: 0.2}}
+          transition={{delay: 0.15}}
         >
           <table className="w-full">
             <thead>
-            <tr className="bg-slate-50/80 dark:bg-slate-700/30 border-b border-slate-100 dark:border-slate-700/50">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">简历名称</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">上传日期</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">分析状态</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI 评分</th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">面试状态</th>
-              <th className="w-20"></th>
+            <tr style={{backgroundColor: 'var(--color-surface-soft)', borderBottom: '1px solid var(--color-hairline)'}}>
+              <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider" style={{color: 'var(--color-muted)'}}>简历名称</th>
+              <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider" style={{color: 'var(--color-muted)'}}>上传日期</th>
+              <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider" style={{color: 'var(--color-muted)'}}>分析状态</th>
+              <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider" style={{color: 'var(--color-muted)'}}>AI 评分</th>
+              <th className="text-left px-5 py-3 text-[11px] font-semibold uppercase tracking-wider" style={{color: 'var(--color-muted)'}}>面试状态</th>
+              <th className="w-16"></th>
             </tr>
             </thead>
             <tbody>
@@ -200,96 +219,98 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
               {filteredResumes.map((resume, index) => (
                 <motion.tr
                   key={resume.id}
-                  initial={{opacity: 0, x: -20}}
+                  initial={{opacity: 0, x: -12}}
                   animate={{opacity: 1, x: 0}}
-                  transition={{delay: index * 0.05}}
+                  transition={{delay: index * 0.03}}
                   onClick={() => onSelectResume(resume.id)}
-                  className="border-b border-slate-100 dark:border-slate-700/30 last:border-0 hover:bg-primary-50/40 dark:hover:bg-primary-900/10 cursor-pointer transition-colors duration-150 group"
+                  className="group cursor-pointer transition-colors"
+                  style={{borderBottom: '1px solid var(--color-hairline-soft)'}}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 >
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-4">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 bg-gradient-to-br from-primary-50 to-emerald-50 dark:from-primary-900/30 dark:to-emerald-900/20 rounded-xl flex items-center justify-center text-primary-500 dark:text-primary-400 shadow-sm">
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                        className="w-9 h-9 rounded-lg flex items-center justify-center"
+                        style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-primary)'}}
+                      >
+                        <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none">
                           <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-                                stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                                strokeLinejoin="round"/>
-                          <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2"
-                                    strokeLinecap="round" strokeLinejoin="round"/>
+                            stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <polyline points="14,2 14,8 20,8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
-                      <span className="font-medium text-slate-800 dark:text-white">{resume.filename}</span>
+                      <span className="text-sm font-medium" style={{color: 'var(--color-ink)'}}>{resume.filename}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-5 text-slate-500 dark:text-slate-400">{formatDateOnly(resume.uploadedAt)}</td>
-                  <td className="px-6 py-5">
+                  <td className="px-5 py-4 text-sm" style={{color: 'var(--color-muted)'}}>{formatDateOnly(resume.uploadedAt)}</td>
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-2">
                       <AnalyzeStatusIcon status={resume.analyzeStatus}/>
-                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                      <span className="text-sm" style={{color: 'var(--color-body-text)'}}>
                         {getAnalyzeStatusText(resume.analyzeStatus)}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-5">
+                  <td className="px-5 py-4">
                     {resume.analyzeStatus === 'COMPLETED' && resume.latestScore !== undefined ? (
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-20 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{backgroundColor: 'var(--color-hairline)'}}>
                           <motion.div
                             className={`h-full ${getScoreProgressColor(resume.latestScore)} rounded-full`}
                             initial={{width: 0}}
                             animate={{width: `${resume.latestScore}%`}}
-                            transition={{duration: 0.8, delay: index * 0.05}}
+                            transition={{duration: 0.6, delay: index * 0.03}}
                           />
                         </div>
-                        <span className="font-bold text-slate-800 dark:text-white">{resume.latestScore}</span>
+                        <span className="text-sm font-semibold tabular-nums" style={{color: 'var(--color-ink)'}}>{resume.latestScore}</span>
                       </div>
                     ) : isAnalyzing(resume.analyzeStatus) ? (
-                      <span className="text-blue-500 dark:text-blue-400 text-sm">生成中...</span>
+                      <span className="text-sm" style={{color: 'var(--color-primary)'}}>生成中...</span>
                     ) : resume.analyzeStatus === 'FAILED' ? (
-                      <span className="text-red-500 dark:text-red-400 text-sm"
-                            title={resume.analyzeError}>失败</span>
+                      <span className="text-sm" style={{color: 'var(--color-error)'}} title={resume.analyzeError}>失败</span>
                     ) : (
-                      <span className="text-slate-400 dark:text-slate-500">-</span>
+                      <span className="text-sm" style={{color: 'var(--color-muted-soft)'}}>-</span>
                     )}
                   </td>
-                  <td className="px-6 py-5">
+                  <td className="px-5 py-4">
                     {resume.interviewCount > 0 ? (
                       <span className="badge-completed">
-                        <CheckCircle className="w-4 h-4" />
+                        <CheckCircle className="w-3.5 h-3.5"/>
                         已完成
                       </span>
                     ) : (
                       <span className="badge-pending">待面试</span>
                     )}
                   </td>
-                  <td className="px-4">
-                    <div className="flex items-center gap-2">
+                  <td className="px-3">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={(e) => handleDeleteClick(resume.id, resume.filename, e)}
                         disabled={deletingId === resume.id}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{color: 'var(--color-muted-soft)'}}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-error)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted-soft)'; }}
                         title="删除简历"
                       >
                         {deletingId === resume.id ? (
                           <motion.div
-                            className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full"
+                            className="w-4 h-4 border-2 rounded-full"
+                            style={{borderColor: 'var(--color-error)', borderTopColor: 'transparent'}}
                             animate={{rotate: 360}}
                             transition={{duration: 1, repeat: Infinity, ease: "linear"}}
                           />
                         ) : (
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
                             <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z"
-                                  stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                                  strokeLinejoin="round"/>
-                            <path d="M10 11V17M14 11V17" stroke="currentColor" strokeWidth="2"
-                                  strokeLinecap="round" strokeLinejoin="round"/>
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M10 11V17M14 11V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                       </button>
                       <svg className="arrow-icon" viewBox="0 0 24 24" fill="none">
-                        <polyline points="9,18 15,12 9,6" stroke="currentColor" strokeWidth="2"
-                                  strokeLinecap="round" strokeLinejoin="round"/>
+                        <polyline points="9,18 15,12 9,6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   </td>
@@ -313,12 +334,12 @@ export default function HistoryList({onSelectResume}: HistoryListProps) {
           deleteConfirm ? (
             <>
               <p className="mb-2">确定要删除简历 <strong>"{deleteConfirm.filename}"</strong> 吗？</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">删除后将同时删除：</p>
-              <ul className="text-sm text-slate-500 dark:text-red-400 list-disc list-inside mb-2">
+              <p className="text-xs mb-1.5" style={{color: 'var(--color-muted)'}}>删除后将同时删除：</p>
+              <ul className="text-xs list-disc list-inside mb-2" style={{color: 'var(--color-error)'}}>
                 <li>简历评价记录</li>
                 <li>所有模拟面试记录</li>
               </ul>
-              <p className="text-sm font-semibold text-red-600">此操作不可恢复！</p>
+              <p className="text-xs font-semibold" style={{color: 'var(--color-error)'}}>此操作不可恢复！</p>
             </>
           ) : undefined
         }

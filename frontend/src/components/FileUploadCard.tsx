@@ -3,35 +3,20 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {AlertCircle, FileText, Loader2, Upload, X} from 'lucide-react';
 
 export interface FileUploadCardProps {
-  /** 标题 */
   title: string;
-  /** 副标题 */
   subtitle: string;
-  /** 接受的文件类型 */
   accept: string;
-  /** 支持的格式说明 */
   formatHint: string;
-  /** 最大文件大小说明 */
   maxSizeHint: string;
-  /** 是否正在上传 */
   uploading?: boolean;
-  /** 上传按钮文字 */
   uploadButtonText?: string;
-  /** 选择按钮文字 */
   selectButtonText?: string;
-  /** 是否显示名称输入框 */
   showNameInput?: boolean;
-  /** 名称输入框占位符 */
   namePlaceholder?: string;
-  /** 名称输入框标签 */
   nameLabel?: string;
-  /** 错误信息 */
   error?: string;
-  /** 文件选择回调 */
   onFileSelect?: (file: File) => void;
-  /** 上传回调 */
   onUpload: (file: File, name?: string) => void;
-  /** 返回回调 */
   onBack?: () => void;
 }
 
@@ -97,26 +82,28 @@ export default function FileUploadCard({
 
   return (
     <motion.div
-      className="max-w-3xl mx-auto pt-16"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      className="max-w-2xl mx-auto pt-16"
+      initial={{opacity: 0, y: 16}}
+      animate={{opacity: 1, y: 0}}
+      transition={{duration: 0.3}}
     >
       {/* 标题 */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-10">
         <motion.h1
-            className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          className="text-3xl mb-3"
+          style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)', fontWeight: 500}}
+          initial={{opacity: 0, y: 16}}
+          animate={{opacity: 1, y: 0}}
+          transition={{delay: 0.1}}
         >
           {title}
         </motion.h1>
         <motion.p
-            className="text-lg text-slate-500 dark:text-slate-400"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          className="text-sm"
+          style={{color: 'var(--color-muted)'}}
+          initial={{opacity: 0}}
+          animate={{opacity: 1}}
+          transition={{delay: 0.15}}
         >
           {subtitle}
         </motion.p>
@@ -124,17 +111,19 @@ export default function FileUploadCard({
 
       {/* 上传区域 */}
       <motion.div
-          className={`relative bg-white dark:bg-slate-800 rounded-2xl p-12 cursor-pointer transition-all duration-300 border-2 border-dashed
-          ${dragOver ? 'border-primary-400 bg-primary-50/60 dark:bg-primary-900/20 scale-[1.02] shadow-xl' : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 shadow-sm hover:shadow-lg'}`}
+        className="relative rounded-lg p-10 cursor-pointer transition-all duration-200 border-2 border-dashed"
+        style={{
+          backgroundColor: dragOver ? 'var(--color-surface-soft)' : 'var(--color-surface-card)',
+          borderColor: dragOver ? 'var(--color-primary)' : 'var(--color-hairline)',
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => document.getElementById('file-upload-input')?.click()}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
+        initial={{opacity: 0, y: 16}}
+        animate={{opacity: 1, y: 0}}
+        transition={{delay: 0.2}}
       >
-
         <input
           type="file"
           id="file-upload-input"
@@ -149,64 +138,67 @@ export default function FileUploadCard({
             {selectedFile ? (
               <motion.div
                 key="file-selected"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{opacity: 0, scale: 0.95}}
+                animate={{opacity: 1, scale: 1}}
+                exit={{opacity: 0, scale: 0.95}}
                 className="space-y-4"
               >
-                <div
-                    className="w-20 h-20 mx-auto bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center">
-                  <FileText className="w-10 h-10 text-primary-600 dark:text-primary-400"/>
+                <div className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--color-surface-soft)'}}>
+                  <FileText className="w-8 h-8" style={{color: 'var(--color-primary)'}}/>
                 </div>
-                <div
-                    className="flex items-center gap-4 bg-slate-50 dark:bg-slate-700/50 px-6 py-4 rounded-xl max-w-md mx-auto">
+                <div className="flex items-center gap-4 px-5 py-3 rounded-lg max-w-sm mx-auto" style={{backgroundColor: 'var(--color-surface-soft)'}}>
                   <div className="text-left flex-1 min-w-0">
-                    <p className="font-semibold text-slate-900 dark:text-white truncate">{selectedFile.name}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{formatFileSize(selectedFile.size)}</p>
+                    <p className="text-sm font-medium truncate" style={{color: 'var(--color-ink)'}}>{selectedFile.name}</p>
+                    <p className="text-xs" style={{color: 'var(--color-muted)'}}>{formatFileSize(selectedFile.size)}</p>
                   </div>
                   <button
-                      className="w-8 h-8 bg-red-100 dark:bg-red-900/50 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/70 transition-colors flex items-center justify-center"
+                    className="w-7 h-7 rounded flex items-center justify-center transition-colors"
+                    style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-error)'}}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedFile(null);
                     }}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5"/>
                   </button>
                 </div>
               </motion.div>
             ) : (
               <motion.div
                 key="no-file"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{opacity: 0}}
+                animate={{opacity: 1}}
+                exit={{opacity: 0}}
                 className="space-y-4"
               >
                 <motion.div
-                  className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center transition-colors
-                    ${dragOver ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}
-                  animate={{ y: dragOver ? -5 : 0 }}
+                  className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center transition-colors"
+                  style={{
+                    backgroundColor: dragOver ? 'var(--color-surface-cream-strong)' : 'var(--color-surface-soft)',
+                    color: dragOver ? 'var(--color-primary)' : 'var(--color-muted)',
+                  }}
+                  animate={{y: dragOver ? -4 : 0}}
                 >
-                  <Upload className="w-10 h-10" />
+                  <Upload className="w-8 h-8"/>
                 </motion.div>
                 <div>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">点击或拖拽文件至此处</h3>
-                  <p className="text-slate-400 dark:text-slate-500 mb-4">
+                  <h3 className="text-base font-semibold mb-1.5" style={{color: 'var(--color-ink)'}}>点击或拖拽文件至此处</h3>
+                  <p className="text-xs mb-4" style={{color: 'var(--color-muted-soft)'}}>
                     {formatHint}（{maxSizeHint}）
                   </p>
                 </div>
-                <motion.button
-                  className="bg-gradient-to-r from-primary-600 to-primary-500 text-white px-8 py-3.5 rounded-xl font-semibold shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
+                  className="px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+                  style={{backgroundColor: 'var(--color-primary)'}}
                   onClick={(e) => {
                     e.stopPropagation();
                     document.getElementById('file-upload-input')?.click();
                   }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-active)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
                 >
                   {selectButtonText}
-                </motion.button>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -216,17 +208,19 @@ export default function FileUploadCard({
       {/* 名称输入框 */}
       {showNameInput && selectedFile && (
         <motion.div
-            className="mt-6 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="mt-5 rounded-lg p-5 border"
+          style={{backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-hairline)'}}
+          initial={{opacity: 0, y: 12}}
+          animate={{opacity: 1, y: 0}}
         >
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">{nameLabel}</label>
+          <label className="block text-sm font-medium mb-1.5" style={{color: 'var(--color-body-strong)'}}>{nameLabel}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={namePlaceholder}
-            className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
+            className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none transition-colors"
+            style={{borderColor: 'var(--color-hairline)', backgroundColor: 'var(--color-canvas)', color: 'var(--color-ink)'}}
             disabled={uploading}
             onClick={(e) => e.stopPropagation()}
           />
@@ -237,46 +231,49 @@ export default function FileUploadCard({
       <AnimatePresence>
         {error && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="mt-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl text-red-600 dark:text-red-400 text-center flex items-center justify-center gap-2"
+            initial={{opacity: 0, y: -8}}
+            animate={{opacity: 1, y: 0}}
+            exit={{opacity: 0, y: -8}}
+            className="mt-5 p-3 rounded-lg text-sm text-center flex items-center justify-center gap-2"
+            style={{backgroundColor: 'rgba(198,69,69,0.1)', color: 'var(--color-error)', border: '1px solid rgba(198,69,69,0.2)'}}
           >
-            <AlertCircle className="w-5 h-5" />
+            <AlertCircle className="w-4 h-4"/>
             {error}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* 操作按钮 */}
-      <div className="mt-8 flex gap-4 justify-center">
+      <div className="mt-6 flex gap-3 justify-center">
         {onBack && (
-          <motion.button
+          <button
             onClick={onBack}
-            className="btn-secondary px-6 py-3 rounded-xl"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="px-5 py-2.5 border rounded-lg text-sm font-medium transition-colors"
+            style={{borderColor: 'var(--color-hairline)', color: 'var(--color-body-text)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             返回
-          </motion.button>
+          </button>
         )}
         {selectedFile && (
-          <motion.button
+          <button
             onClick={handleUpload}
             disabled={uploading}
-            className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:from-emerald-600 hover:to-emerald-700 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
-            whileHover={{ scale: uploading ? 1 : 1.02 }}
-            whileTap={{ scale: uploading ? 1 : 0.98 }}
+            className="px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            style={{backgroundColor: 'var(--color-primary)'}}
+            onMouseEnter={e => { if (!uploading) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-active)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
           >
             {uploading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin"/>
                 处理中...
               </>
             ) : (
               uploadButtonText
             )}
-          </motion.button>
+          </button>
         )}
       </div>
     </motion.div>

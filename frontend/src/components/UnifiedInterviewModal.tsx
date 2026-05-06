@@ -7,7 +7,6 @@ import {
 import { useInterviewConfig, CUSTOM_SKILL_ID, DIFFICULTY_OPTIONS, type InterviewMode, type Difficulty } from '../hooks/useInterviewConfig';
 import { getSkillIcon } from '../utils/skillIcons';
 
-// Re-export for backward compatibility
 export type { InterviewMode, Difficulty };
 export { DIFFICULTY_OPTIONS };
 
@@ -90,6 +89,11 @@ export default function UnifiedInterviewModal({
     });
   };
 
+  const selectStyle = (selected: boolean): React.CSSProperties => ({
+    borderColor: selected ? 'var(--color-primary)' : 'var(--color-hairline)',
+    backgroundColor: selected ? 'rgba(204,120,92,0.08)' : 'var(--color-surface-card)',
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -101,7 +105,8 @@ export default function UnifiedInterviewModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 z-50"
+            style={{backgroundColor: 'rgba(20,20,19,0.5)'}}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
@@ -109,27 +114,31 @@ export default function UnifiedInterviewModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              style={{backgroundColor: 'var(--color-surface-card)'}}
             >
               {/* Header */}
-              <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-700/50">
+              <div className="px-6 py-5 border-b" style={{borderColor: 'var(--color-hairline)'}}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 via-primary-600 to-emerald-600 flex items-center justify-center shadow-lg shadow-primary-500/25">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--color-primary)'}}>
                       <Sparkles className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                      <h2 className="text-lg font-bold" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>
                         {title}
                       </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs" style={{color: 'var(--color-muted)'}}>
                         {subtitle}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={onClose}
-                    className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    className="p-2 rounded-lg transition-colors"
+                    style={{color: 'var(--color-muted)'}}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -140,7 +149,7 @@ export default function UnifiedInterviewModal({
               <div className="px-6 py-5 space-y-5">
                 {!hideModeSwitch && (
                   <div>
-                    <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className="flex items-center gap-2 mb-3 text-sm font-semibold" style={{color: 'var(--color-body-text)'}}>
                       面试模式
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -166,23 +175,20 @@ export default function UnifiedInterviewModal({
                           <button
                             key={opt.value}
                             onClick={() => config.setMode(opt.value)}
-                            className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 text-left
-                              ${selected
-                                ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                              }`}
+                            className="flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 text-left"
+                            style={selectStyle(selected)}
                           >
-                            <Icon className={`w-5 h-5 flex-shrink-0 ${selected ? 'text-primary-500' : 'text-slate-400'}`} />
+                            <Icon className="w-5 h-5 flex-shrink-0" style={{color: selected ? 'var(--color-primary)' : 'var(--color-muted)'}} />
                             <div className="min-w-0">
-                              <p className={`font-semibold text-sm flex items-center gap-2 ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-900 dark:text-white'}`}>
+                              <p className="font-semibold text-sm flex items-center gap-2" style={{color: selected ? 'var(--color-primary)' : 'var(--color-ink)'}}>
                                 <span>{opt.label}</span>
                                 {opt.recommended && (
-                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold" style={{backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981'}}>
                                     推荐
                                   </span>
                                 )}
                               </p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400">{opt.desc}</p>
+                              <p className="text-[11px]" style={{color: 'var(--color-muted)'}}>{opt.desc}</p>
                             </div>
                           </button>
                         );
@@ -191,13 +197,13 @@ export default function UnifiedInterviewModal({
                   </div>
                 )}
 
-                {/* 面试方向 */}
+                {/* Skills */}
                 <div>
-                  <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <label className="flex items-center gap-2 mb-3 text-sm font-semibold" style={{color: 'var(--color-body-text)'}}>
                     面试方向
                   </label>
                   {config.loadingSkills ? (
-                    <div className="flex items-center gap-2 py-4 text-slate-400">
+                    <div className="flex items-center gap-2 py-4" style={{color: 'var(--color-muted)'}}>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span className="text-sm">加载中...</span>
                     </div>
@@ -211,52 +217,43 @@ export default function UnifiedInterviewModal({
                           <button
                             key={skill.id}
                             onClick={() => config.setSkillId(skill.id)}
-                            className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all duration-200 text-left
-                              ${selected
-                                ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                              }`}
+                            className="flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 text-left"
+                            style={selectStyle(selected)}
                           >
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${
-                              selected ? skill.display?.iconBg || 'bg-primary-100 dark:bg-primary-900/50' : 'bg-slate-100 dark:bg-slate-700'
-                            }`}>
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                              style={{backgroundColor: selected ? 'rgba(204,120,92,0.12)' : 'var(--color-surface-soft)'}}>
                               {IconComponent
-                                ? <IconComponent className={`w-5 h-5 ${selected ? (skill.display?.iconColor || 'text-primary-600') : 'text-slate-500 dark:text-slate-400'}`} />
-                                : <span className={selected ? (skill.display?.iconColor || 'text-primary-600') : ''}>{fallbackEmoji}</span>
+                                ? <IconComponent className="w-5 h-5" style={{color: selected ? 'var(--color-primary)' : 'var(--color-muted)'}} />
+                                : <span>{fallbackEmoji}</span>
                               }
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className={`text-xs font-medium block truncate ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                              <span className="text-xs font-medium block truncate" style={{color: selected ? 'var(--color-primary)' : 'var(--color-body-text)'}}>
                                 {skill.name}
                               </span>
-                              <span className="text-[10px] text-slate-400 truncate block">
+                              <span className="text-[10px] truncate block" style={{color: 'var(--color-muted-soft)'}}>
                                 {skill.description}
                               </span>
                             </div>
                           </button>
                         );
                       })}
-                      {/* 自定义按钮 */}
                       <button
                         onClick={() => config.setSkillId(CUSTOM_SKILL_ID)}
-                        className={`flex items-center gap-3 p-3 rounded-xl border-2 border-dashed transition-all duration-200 text-left
-                          ${config.isCustomSkill
-                            ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600'
-                          }`}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-dashed transition-all duration-200 text-left"
+                        style={selectStyle(config.isCustomSkill)}
                       >
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                          config.isCustomSkill ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-slate-100 dark:bg-slate-700'
-                        }`}>
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{backgroundColor: config.isCustomSkill ? 'rgba(204,120,92,0.12)' : 'var(--color-surface-soft)'}}>
                           {(() => {
                             const CustomIcon = getSkillIcon(CUSTOM_SKILL_ID);
                             return CustomIcon
-                              ? <CustomIcon className={`w-5 h-5 ${config.isCustomSkill ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400'}`} />
+                              ? <CustomIcon className="w-5 h-5" style={{color: config.isCustomSkill ? 'var(--color-primary)' : 'var(--color-muted)'}} />
                               : <span className="text-base">✨</span>;
                           })()}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className={`text-xs font-medium block ${config.isCustomSkill ? 'text-primary-700 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                          <span className="text-xs font-medium block" style={{color: config.isCustomSkill ? 'var(--color-primary)' : 'var(--color-muted)'}}>
                             自定义 JD
                           </span>
                         </div>
@@ -265,7 +262,7 @@ export default function UnifiedInterviewModal({
                   )}
                 </div>
 
-                {/* 自定义 JD 输入 */}
+                {/* Custom JD */}
                 <AnimatePresence>
                   {config.isCustomSkill && (
                     <motion.div
@@ -274,23 +271,20 @@ export default function UnifiedInterviewModal({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className="space-y-3 bg-gradient-to-br from-primary-50/60 to-emerald-50/30 dark:from-primary-900/15 dark:to-emerald-900/10 rounded-xl p-4 border border-primary-100/50 dark:border-primary-800/30">
+                      <div className="space-y-3 rounded-lg p-4 border" style={{backgroundColor: 'rgba(204,120,92,0.04)', borderColor: 'rgba(204,120,92,0.15)'}}>
                         <textarea
                           value={config.customJdText}
                           onChange={e => config.setCustomJdText(e.target.value)}
                           placeholder="粘贴目标岗位的职位描述（JD），至少 50 字..."
                           rows={4}
-                          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700
-                            bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white
-                            placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2
-                            focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
+                          className="w-full px-4 py-3 rounded-lg border text-sm resize-none focus:outline-none"
+                          style={{borderColor: 'var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)'}}
                         />
                         <button
                           onClick={config.handleParseJd}
                           disabled={config.parsingJd || !config.customJdText}
-                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                            bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50
-                            disabled:cursor-not-allowed transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          style={{backgroundColor: 'var(--color-primary)'}}
                         >
                           {config.parsingJd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                           解析面试方向
@@ -300,16 +294,17 @@ export default function UnifiedInterviewModal({
                             {config.customCategories.map((cat, i) => (
                               <span
                                 key={i}
-                                className="px-3 py-1 text-xs font-medium rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                                className="px-3 py-1 text-xs font-medium rounded-full"
+                                style={{backgroundColor: 'rgba(204,120,92,0.1)', color: 'var(--color-primary)'}}
                               >
                                 {cat.label}
-                                <span className="ml-1 text-[10px] text-primary-500">({cat.priority})</span>
+                                <span className="ml-1 text-[10px]" style={{color: 'var(--color-primary)'}}>({cat.priority})</span>
                               </span>
                             ))}
                           </div>
                         )}
                         {config.jdNeedsReparse && (
-                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                          <p className="text-xs" style={{color: 'var(--color-warning)'}}>
                             JD 已修改，请重新解析后再开始面试。
                           </p>
                         )}
@@ -318,9 +313,9 @@ export default function UnifiedInterviewModal({
                   )}
                 </AnimatePresence>
 
-                {/* 难度 */}
+                {/* Difficulty */}
                 <div>
-                  <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                  <label className="flex items-center gap-2 mb-3 text-sm font-semibold" style={{color: 'var(--color-body-text)'}}>
                     难度
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -330,30 +325,28 @@ export default function UnifiedInterviewModal({
                         <button
                           key={opt.value}
                           onClick={() => config.setDifficulty(opt.value)}
-                          className={`py-2.5 px-3 rounded-xl border-2 transition-all duration-200 text-center
-                            ${selected
-                              ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                              : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                            }`}
+                          className="py-2.5 px-3 rounded-lg border transition-all duration-200 text-center"
+                          style={selectStyle(selected)}
                         >
-                          <p className={`text-sm font-semibold ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                          <p className="text-sm font-semibold" style={{color: selected ? 'var(--color-primary)' : 'var(--color-body-text)'}}>
                             {opt.label}
                           </p>
-                          <p className="text-[11px] text-slate-400">{opt.desc}</p>
+                          <p className="text-[11px]" style={{color: 'var(--color-muted)'}}>{opt.desc}</p>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* 更多选项 */}
+                {/* More options */}
                 <button
                   onClick={() => config.setShowMore(!config.showMore)}
-                  className="w-full flex items-center gap-2 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  className="w-full flex items-center gap-2 py-2 text-sm transition-colors"
+                  style={{color: 'var(--color-muted)'}}
                 >
                   {config.showMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   <span>更多选项</span>
-                  <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+                  <div className="flex-1 h-px" style={{backgroundColor: 'var(--color-hairline)'}} />
                 </button>
 
                 <AnimatePresence>
@@ -364,20 +357,19 @@ export default function UnifiedInterviewModal({
                       exit={{ height: 0, opacity: 0 }}
                       className="overflow-hidden space-y-4"
                     >
-                      {/* 简历选择 */}
-                      <div className="bg-gradient-to-br from-primary-50/80 to-blue-50/80 dark:from-primary-900/20 dark:to-blue-900/10 rounded-xl p-4 border border-primary-100 dark:border-primary-800/30">
+                      {/* Resume select */}
+                      <div className="rounded-lg p-4 border" style={{backgroundColor: 'rgba(204,120,92,0.04)', borderColor: 'rgba(204,120,92,0.15)'}}>
                         <div className="flex items-center gap-3 mb-3">
-                          <FileStack className="w-5 h-5 text-primary-500" />
-                          <p className="font-semibold text-sm text-primary-900 dark:text-primary-100">
+                          <FileStack className="w-5 h-5" style={{color: 'var(--color-primary)'}} />
+                          <p className="font-semibold text-sm" style={{color: 'var(--color-ink)'}}>
                             基于简历面试（可选）
                           </p>
                         </div>
                         <select
                           value={config.resumeId || ''}
                           onChange={e => config.setResumeId(e.target.value ? parseInt(e.target.value) : undefined)}
-                          className="w-full px-4 py-2.5 rounded-lg border border-primary-200 dark:border-primary-700/50
-                            bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white
-                            focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-shadow"
+                          className="w-full px-4 py-2.5 rounded-lg border text-sm focus:outline-none"
+                          style={{borderColor: 'var(--color-hairline)', backgroundColor: 'var(--color-surface-card)', color: 'var(--color-ink)'}}
                         >
                           <option value="">不使用简历（通用提问）</option>
                           {config.resumes.map(r => (
@@ -386,10 +378,10 @@ export default function UnifiedInterviewModal({
                         </select>
                       </div>
 
-                      {/* 文字面试 - 题目数 */}
+                      {/* Question count */}
                       {config.mode === 'text' && (
                         <div>
-                          <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          <label className="flex items-center gap-2 mb-3 text-sm font-semibold" style={{color: 'var(--color-body-text)'}}>
                             题目数量
                           </label>
                           <div className="flex gap-2">
@@ -397,11 +389,11 @@ export default function UnifiedInterviewModal({
                               <button
                                 key={n}
                                 onClick={() => config.setQuestionCount(n)}
-                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
-                                  ${config.questionCount === n
-                                    ? 'bg-primary-500 text-white shadow-sm'
-                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                                  }`}
+                                className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+                                style={{
+                                  backgroundColor: config.questionCount === n ? 'var(--color-primary)' : 'var(--color-surface-soft)',
+                                  color: config.questionCount === n ? 'white' : 'var(--color-body-text)',
+                                }}
                               >
                                 {n} 题
                               </button>
@@ -410,14 +402,14 @@ export default function UnifiedInterviewModal({
                         </div>
                       )}
 
-                      {/* 语音面试 - 时长 */}
+                      {/* Duration */}
                       {config.mode === 'voice' && (
-                        <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                        <div className="rounded-lg p-4 border" style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}>
                           <div className="flex items-center justify-between mb-3">
-                            <p className="font-semibold text-sm text-slate-900 dark:text-white">计划面试时长</p>
-                            <div className="text-2xl font-bold tabular-nums text-primary-600 dark:text-primary-400">
+                            <p className="font-semibold text-sm" style={{color: 'var(--color-ink)'}}>计划面试时长</p>
+                            <div className="text-2xl font-bold tabular-nums" style={{color: 'var(--color-primary)', fontFamily: 'var(--font-display)'}}>
                               {config.plannedDuration}
-                              <span className="text-xs font-normal text-slate-400 ml-0.5">min</span>
+                              <span className="text-xs font-normal ml-0.5" style={{color: 'var(--color-muted)'}}>min</span>
                             </div>
                           </div>
                           <input
@@ -427,11 +419,8 @@ export default function UnifiedInterviewModal({
                             step="5"
                             value={config.plannedDuration}
                             onChange={e => config.setPlannedDuration(parseInt(e.target.value))}
-                            className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer
-                              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4
-                              [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
-                              [&::-webkit-slider-thumb]:bg-primary-500 [&::-webkit-slider-thumb]:cursor-pointer
-                              [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-primary-500/30"
+                            className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                            style={{backgroundColor: 'var(--color-hairline)'}}
                           />
                         </div>
                       )}
@@ -441,15 +430,14 @@ export default function UnifiedInterviewModal({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 bg-gradient-to-r from-primary-50/50 to-emerald-50/30 dark:from-slate-800/80 dark:to-slate-800/80 border-t border-slate-100 dark:border-slate-700/50 rounded-b-2xl">
+              <div className="px-6 py-4 border-t rounded-b-lg" style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}>
                 <div className="flex gap-3">
                   <motion.button
                     onClick={onClose}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-5 py-3 border border-slate-200 dark:border-slate-700
-                      text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm
-                      hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                    className="flex-1 px-5 py-3 border rounded-lg font-medium text-sm transition-all"
+                    style={{borderColor: 'var(--color-hairline)', color: 'var(--color-body-text)'}}
                   >
                     取消
                   </motion.button>
@@ -458,9 +446,8 @@ export default function UnifiedInterviewModal({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={config.isCustomStartDisabled}
-                    className="flex-1 px-5 py-3 rounded-xl font-semibold text-sm transition-all
-                      bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700
-                      text-white shadow-lg shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-5 py-3 rounded-lg font-semibold text-sm transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{backgroundColor: 'var(--color-primary)'}}
                   >
                     {startButtonText}
                   </motion.button>

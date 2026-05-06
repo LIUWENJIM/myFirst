@@ -52,6 +52,7 @@ public class DocumentParseService {
             return "";
         }
 
+
         try (InputStream inputStream = file.getInputStream()) {
             String content = parseContent(inputStream);
             String cleanedContent = textCleaningService.cleanText(content);

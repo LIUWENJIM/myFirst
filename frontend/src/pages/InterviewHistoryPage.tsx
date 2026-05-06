@@ -74,11 +74,11 @@ function isEvaluateFailed(item: UnifiedInterviewItem): boolean {
 }
 
 function StatusIcon({ item }: { item: UnifiedInterviewItem }) {
-  if (isEvaluateFailed(item)) return <AlertCircle className="w-4 h-4 text-red-500 dark:text-red-400"/>;
-  if (isEvaluating(item)) return <RefreshCw className="w-4 h-4 text-blue-500 dark:text-blue-400 animate-spin"/>;
-  if (isEvaluateCompleted(item)) return <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400"/>;
-  if (item.status === 'IN_PROGRESS') return <PlayCircle className="w-4 h-4 text-blue-500 dark:text-blue-400"/>;
-  return <Clock className="w-4 h-4 text-yellow-500 dark:text-yellow-400"/>;
+  if (isEvaluateFailed(item)) return <AlertCircle className="w-4 h-4" style={{color: 'var(--color-error)'}}/>;
+  if (isEvaluating(item)) return <RefreshCw className="w-4 h-4 animate-spin" style={{color: 'var(--color-primary)'}}/>;
+  if (isEvaluateCompleted(item)) return <CheckCircle className="w-4 h-4" style={{color: 'var(--color-success)'}}/>;
+  if (item.status === 'IN_PROGRESS') return <PlayCircle className="w-4 h-4" style={{color: 'var(--color-primary)'}}/>;
+  return <Clock className="w-4 h-4" style={{color: 'var(--color-warning)'}}/>;
 }
 
 function getStatusText(item: UnifiedInterviewItem): string {
@@ -103,28 +103,26 @@ function StatCard({
   label,
   value,
   suffix,
-  color,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: number | string;
   suffix?: string;
-  color: string;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-slate-800/90 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-700/50 transition-all duration-200 hover:shadow-md"
+      className="card-container-interactive p-6"
     >
       <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-lg ${color} shadow-lg`}>
-          <Icon className="w-6 h-6 text-white" />
+        <div className="p-3 rounded-lg" style={{backgroundColor: 'var(--color-surface-soft)', color: 'var(--color-primary)'}}>
+          <Icon className="w-6 h-6" />
         </div>
         <div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="text-2xl font-bold text-slate-800 dark:text-white">
-            {value}{suffix && <span className="text-base font-normal text-slate-400 dark:text-slate-500 ml-1">{suffix}</span>}
+          <p className="text-sm" style={{color: 'var(--color-muted)'}}>{label}</p>
+          <p className="text-2xl font-bold" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>
+            {value}{suffix && <span className="text-base font-normal ml-1" style={{color: 'var(--color-muted)'}}>{suffix}</span>}
           </p>
         </div>
       </div>
@@ -135,14 +133,16 @@ function StatCard({
 function TypeBadge({ type }: { type: 'text' | 'voice' }) {
   if (type === 'voice') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-xs font-medium">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+        style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-accent-teal)'}}>
         <Mic className="w-3 h-3" />
         语音
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+      style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-primary)'}}>
       <FileText className="w-3 h-3" />
       文字
     </span>
@@ -156,7 +156,6 @@ interface InterviewHistoryPageProps {
   onContinueInterview?: (sessionId: string) => void;
 }
 
-/** Shallow comparison for polling change-detection */
 function itemsEqual(a: UnifiedInterviewItem[], b: UnifiedInterviewItem[]): boolean {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -183,9 +182,7 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
 
   const loadAll = useCallback(async (isPolling = false) => {
     if (!isPolling) setLoading(true);
-
     try {
-      // Only fetch skills on first load; reuse cached ref on polling
       if (!skillsLoadedRef.current) {
         skillsRef.current = await skillApi.listSkills().catch(() => [] as SkillDTO[]);
         skillsLoadedRef.current = true;
@@ -209,7 +206,6 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
         return all;
       });
 
-      // Compute stats
       const evaluated = all.filter(i => isEvaluateCompleted(i));
       const totalScore = evaluated.reduce((sum, i) => sum + (i.overallScore || 0), 0);
       const newStats = {
@@ -231,7 +227,6 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
     }
   }, []);
 
-  // Load text interviews from dedicated API
   async function loadTextInterviews(skills: SkillDTO[]): Promise<UnifiedInterviewItem[]> {
     try {
       const sessions = await interviewApi.listSessions();
@@ -253,7 +248,6 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
     }
   }
 
-  // Load voice interviews from voice API
   async function loadVoiceInterviews(): Promise<UnifiedInterviewItem[]> {
     try {
       const sessions = await voiceInterviewApi.getAllSessions();
@@ -275,26 +269,18 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
     }
   }
 
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
-  // Polling for evaluation status
   useEffect(() => {
     const hasEvaluating = items.some(i => isEvaluating(i));
-
     if (hasEvaluating && !pollingRef.current) {
       pollingRef.current = window.setInterval(() => loadAll(true), 3000);
     } else if (!hasEvaluating && pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
-
     return () => {
-      if (pollingRef.current) {
-        clearInterval(pollingRef.current);
-        pollingRef.current = null;
-      }
+      if (pollingRef.current) { clearInterval(pollingRef.current); pollingRef.current = null; }
     };
   }, [items, loadAll]);
 
@@ -354,7 +340,6 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
     }
   };
 
-  // Filter + search
   const filtered = items.filter(item => {
     if (typeFilter !== 'all' && item.type !== typeFilter) return false;
     if (searchTerm && !item.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -367,7 +352,7 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
       <div className="flex justify-between items-start mb-8 flex-wrap gap-6">
         <div>
           <motion.h1
-            className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3"
+            className="page-title flex items-center gap-3"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
           >
@@ -376,28 +361,26 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
             </div>
             面试记录
           </motion.h1>
-          <motion.p
-            className="text-slate-500 dark:text-slate-400 mt-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
+          <motion.p className="page-subtitle ml-11"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
             查看和管理所有模拟面试记录
           </motion.p>
         </div>
 
         <motion.div
-          className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 min-w-[280px] focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 dark:focus-within:ring-primary-900/30 transition-all"
+          className="flex items-center gap-3 border rounded-lg px-4 py-2.5 min-w-[280px] transition-all"
+          style={{backgroundColor: 'var(--color-surface-card)', borderColor: 'var(--color-hairline)'}}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          <Search className="w-5 h-5 text-slate-400" />
+          <Search className="w-5 h-5" style={{color: 'var(--color-muted-soft)'}} />
           <input
             type="text"
             placeholder="搜索名称..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 outline-none text-slate-700 dark:text-slate-200 placeholder:text-slate-400 bg-transparent"
+            className="flex-1 outline-none bg-transparent text-sm"
+            style={{color: 'var(--color-ink)'}}
           />
         </motion.div>
       </div>
@@ -405,9 +388,9 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard icon={Users} label="面试总数" value={stats.totalCount} color="bg-primary-500" />
-          <StatCard icon={CheckCircle} label="已完成" value={stats.completedCount} color="bg-emerald-500" />
-          <StatCard icon={TrendingUp} label="平均分数" value={stats.averageScore} suffix="分" color="bg-primary-500" />
+          <StatCard icon={Users} label="面试总数" value={stats.totalCount} />
+          <StatCard icon={CheckCircle} label="已完成" value={stats.completedCount} />
+          <StatCard icon={TrendingUp} label="平均分数" value={stats.averageScore} suffix="分" />
         </div>
       )}
 
@@ -421,11 +404,12 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
           <button
             key={tab.key}
             onClick={() => setTypeFilter(tab.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              typeFilter === tab.key
-                ? 'bg-primary-500 text-white'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600'
-            }`}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: typeFilter === tab.key ? 'var(--color-primary)' : 'var(--color-surface-card)',
+              color: typeFilter === tab.key ? 'var(--color-on-primary)' : 'var(--color-muted)',
+              border: typeFilter === tab.key ? 'none' : '1px solid var(--color-hairline)',
+            }}
           >
             {tab.label}
           </button>
@@ -435,41 +419,41 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+          <Loader2 className="w-8 h-8 animate-spin" style={{color: 'var(--color-primary)'}} />
         </div>
       )}
 
       {/* Empty */}
       {!loading && filtered.length === 0 && (
         <motion.div
-          className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
+          className="empty-state"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          <Users className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">暂无面试记录</h3>
-          <p className="text-slate-500 dark:text-slate-400">开始一次模拟面试后，记录将显示在这里</p>
+          <Users className="w-16 h-16 mx-auto mb-4" style={{color: 'var(--color-muted-soft)'}} />
+          <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>暂无面试记录</h3>
+          <p style={{color: 'var(--color-muted)'}}>开始一次模拟面试后，记录将显示在这里</p>
         </motion.div>
       )}
 
       {/* Table */}
       {!loading && filtered.length > 0 && (
         <motion.div
-          className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden"
+          className="table-container"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
           <table className="w-full">
-            <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-600">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">类型</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">名称</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">状态</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">得分</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">详情</th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">时间</th>
-                <th className="text-right px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">操作</th>
+            <thead>
+              <tr style={{backgroundColor: 'var(--color-surface-soft)', borderBottom: '1px solid var(--color-hairline)'}}>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>类型</th>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>名称</th>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>状态</th>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>得分</th>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>详情</th>
+                <th className="text-left px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>时间</th>
+                <th className="text-right px-6 py-4 text-sm font-medium" style={{color: 'var(--color-muted)'}}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -481,7 +465,10 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleRowClick(item)}
-                    className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group"
+                    className="group cursor-pointer transition-colors"
+                    style={{borderBottom: '1px solid var(--color-hairline-soft)'}}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                   >
                     <td className="px-6 py-4">
                       <TypeBadge type={item.type} />
@@ -489,26 +476,26 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {item.type === 'text' ? (
-                          <FileText className="w-5 h-5 text-slate-400" />
+                          <FileText className="w-5 h-5" style={{color: 'var(--color-muted-soft)'}} />
                         ) : (
-                          <Mic className="w-5 h-5 text-purple-400" />
+                          <Mic className="w-5 h-5" style={{color: 'var(--color-accent-teal)'}} />
                         )}
                         <div>
-                          <p className="font-medium text-slate-800 dark:text-white">{item.title}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">#{item.id.slice(-8)}</p>
+                          <p className="font-medium" style={{color: 'var(--color-ink)'}}>{item.title}</p>
+                          <p className="text-xs" style={{color: 'var(--color-muted-soft)'}}>#{item.id.slice(-8)}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <StatusIcon item={item} />
-                        <span className="text-sm text-slate-600 dark:text-slate-300">{getStatusText(item)}</span>
+                        <span className="text-sm" style={{color: 'var(--color-body-text)'}}>{getStatusText(item)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {isEvaluateCompleted(item) && item.overallScore !== null ? (
                         <div className="flex items-center gap-3">
-                          <div className="w-16 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div className="w-16 h-2 rounded-full overflow-hidden" style={{backgroundColor: 'var(--color-hairline)'}}>
                             <motion.div
                               className={`h-full ${getScoreProgressColor(item.overallScore)} rounded-full`}
                               initial={{ width: 0 }}
@@ -516,30 +503,31 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                               transition={{ duration: 0.8, delay: index * 0.05 }}
                             />
                           </div>
-                          <span className="font-bold text-slate-800 dark:text-white">{item.overallScore}</span>
+                          <span className="font-bold" style={{color: 'var(--color-ink)'}}>{item.overallScore}</span>
                         </div>
                       ) : isEvaluating(item) ? (
-                        <span className="text-blue-500 dark:text-blue-400 text-sm">生成中...</span>
+                        <span className="text-sm" style={{color: 'var(--color-primary)'}}>生成中...</span>
                       ) : isEvaluateFailed(item) ? (
-                        <span className="text-red-500 dark:text-red-400 text-sm" title={item.evaluateError}>失败</span>
+                        <span className="text-sm" style={{color: 'var(--color-error)'}} title={item.evaluateError}>失败</span>
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-500">-</span>
+                        <span style={{color: 'var(--color-muted-soft)'}}>-</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       {item.type === 'text' && item.totalQuestions != null ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm"
+                          style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-body-text)'}}>
                           {item.totalQuestions} 题
                         </span>
                       ) : item.type === 'voice' ? (
-                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                        <span className="text-sm" style={{color: 'var(--color-muted)'}}>
                           {formatDuration(item.actualDuration)}
                         </span>
                       ) : (
-                        <span className="text-slate-400">-</span>
+                        <span style={{color: 'var(--color-muted-soft)'}}>-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    <td className="px-6 py-4 text-sm" style={{color: 'var(--color-muted)'}}>
                       {formatDate(item.createdAt)}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -547,7 +535,8 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                         {item.type === 'text' && !isCompletedStatus(item.status) && !isEvaluateCompleted(item) && onContinueInterview && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onContinueInterview(item.sessionId); }}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors"
+                            style={{color: 'var(--color-muted)'}}
                             title="继续面试"
                           >
                             <PlayCircle className="w-4 h-4" />
@@ -556,7 +545,8 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                         {item.type === 'voice' && isLiveStatus(item.status) && item.voiceSessionId && (
                           <button
                             onClick={(e) => { e.stopPropagation(); navigate('/voice-interview', { state: { voiceSessionId: item.voiceSessionId } }); }}
-                            className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors"
+                            style={{color: 'var(--color-muted)'}}
                             title="继续面试"
                           >
                             <PlayCircle className="w-4 h-4" />
@@ -566,7 +556,8 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                           <button
                             onClick={(e) => handleExport(item.sessionId, e)}
                             disabled={exporting === item.sessionId}
-                            className="p-2 text-slate-400 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 rounded-lg transition-colors disabled:opacity-50"
+                            style={{color: 'var(--color-muted)'}}
                             title="导出PDF"
                           >
                             {exporting === item.sessionId ? (
@@ -579,21 +570,23 @@ export default function InterviewHistoryPage({ onBack: _onBack, onViewInterview,
                         {isEvaluateCompleted(item) && item.type === 'text' && item.resumeId && onRestartInterview && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onRestartInterview(item.resumeId!); }}
-                            className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors"
+                            style={{color: 'var(--color-muted)'}}
                             title="重新面试"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </button>
                         )}
                         <button
-                            onClick={(e) => handleDeleteClick(item, e)}
-                            disabled={deletingSessionId === item.sessionId}
-                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
-                            title="删除"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-1 transition-all"/>
+                          onClick={(e) => handleDeleteClick(item, e)}
+                          disabled={deletingSessionId === item.sessionId}
+                          className="p-2 rounded-lg transition-colors disabled:opacity-50"
+                          style={{color: 'var(--color-muted)'}}
+                          title="删除"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <ChevronRight className="w-5 h-5 flex-shrink-0 transition-all" style={{color: 'var(--color-hairline)'}}/>
                       </div>
                     </td>
                   </motion.tr>

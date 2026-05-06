@@ -10,32 +10,30 @@ interface ScoreProgressBarProps {
   className?: string;
 }
 
-/**
- * 分数进度条组件
- */
 export default function ScoreProgressBar({
   label,
   score,
   maxScore,
-  color = 'bg-primary-500',
+  color = 'var(--color-primary)',
   delay = 0,
   className = ''
 }: ScoreProgressBarProps) {
   const percentage = calculatePercentage(score, maxScore);
 
   return (
-      <div className={`bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 ${className}`}>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-1">{label}</div>
+    <div className={`rounded-lg p-3 ${className}`} style={{backgroundColor: 'var(--color-surface-soft)'}}>
+      <div className="text-xs mb-1" style={{color: 'var(--color-muted)'}}>{label}</div>
       <div className="flex items-center gap-2">
-          <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+        <div className="flex-1 h-2 rounded-full overflow-hidden" style={{backgroundColor: 'var(--color-hairline)'}}>
           <motion.div
-            className={`h-full ${color} rounded-full`}
+            className="h-full rounded-full"
+            style={{backgroundColor: color}}
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
             transition={{ duration: 0.8, delay }}
           />
         </div>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 w-8 text-right">
+        <span className="text-sm font-semibold w-8 text-right" style={{color: 'var(--color-body-text)'}}>
           {score}/{maxScore}
         </span>
       </div>

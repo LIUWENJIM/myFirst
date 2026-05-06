@@ -141,12 +141,19 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
     });
   };
 
+  const inputClass = "w-full px-4 py-3 rounded-lg focus:outline-none transition-all";
+  const inputStyle: React.CSSProperties = {
+    border: '1px solid var(--color-hairline)',
+    backgroundColor: 'var(--color-surface-card)',
+    color: 'var(--color-ink)',
+  };
+
   const renderTextInput = () => (
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-        <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">选择添加方式</span>
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+        <div className="flex-1 h-px" style={{backgroundColor: 'var(--color-hairline)'}} />
+        <span className="text-sm font-medium" style={{color: 'var(--color-muted)'}}>选择添加方式</span>
+        <div className="flex-1 h-px" style={{backgroundColor: 'var(--color-hairline)'}} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -154,17 +161,18 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="button"
-          className="p-4 rounded-xl border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-left transition-all"
+          className="p-4 rounded-lg text-left transition-all"
+          style={{border: '2px solid var(--color-primary)', backgroundColor: 'rgba(204,120,92,0.08)'}}
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-primary-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--color-primary)'}}>
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-primary-900 dark:text-primary-100">粘贴文本</div>
-              <div className="text-xs text-primary-600 dark:text-primary-400">自动解析面试信息</div>
+              <div className="font-semibold" style={{color: 'var(--color-ink)'}}>粘贴文本</div>
+              <div className="text-xs" style={{color: 'var(--color-primary)'}}>自动解析面试信息</div>
             </div>
           </div>
         </motion.button>
@@ -174,17 +182,20 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => setStep('form')}
-          className="p-4 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 text-left transition-all"
+          className="p-4 rounded-lg text-left transition-all"
+          style={{border: '1px solid var(--color-hairline)', backgroundColor: 'var(--color-surface-card)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-hairline)'; }}
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-              <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{backgroundColor: 'var(--color-surface-soft)'}}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{color: 'var(--color-body-text)'}}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-slate-900 dark:text-white">手动输入</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">填写面试详情</div>
+              <div className="font-semibold" style={{color: 'var(--color-ink)'}}>手动输入</div>
+              <div className="text-xs" style={{color: 'var(--color-muted)'}}>填写面试详情</div>
             </div>
           </div>
         </motion.button>
@@ -192,13 +203,16 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+          <label className="block text-sm font-semibold" style={{color: 'var(--color-body-text)'}}>
             粘贴面试邀约文本
           </label>
           <button
             type="button"
             onClick={() => setRawText(INTERVIEW_INVITE_EXAMPLE)}
-            className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+            className="text-xs font-medium transition-colors"
+            style={{color: 'var(--color-primary)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
           >
             使用示例
           </button>
@@ -206,8 +220,9 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
         <textarea
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
-          placeholder="支持飞书、腾讯会议、Zoom 等格式，或点击右上角“使用示例”快速体验解析。"
-          className="w-full h-48 px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 resize-none bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all"
+          placeholder='支持飞书、腾讯会议、Zoom 等格式，或点击右上角"使用示例"快速体验解析。'
+          className={`${inputClass} resize-none`}
+          style={{...inputStyle, height: '12rem'}}
         />
       </div>
 
@@ -217,7 +232,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={onClose}
-          className="px-5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-all"
+          className="px-5 py-2.5 rounded-lg font-medium transition-all"
+          style={{color: 'var(--color-body-text)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
         >
           取消
         </motion.button>
@@ -227,7 +245,8 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           type="button"
           onClick={handleParse}
           disabled={!rawText.trim() || parsing}
-          className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-400 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="px-5 py-2.5 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          style={{backgroundColor: 'var(--color-primary)'}}
         >
           {parsing ? '解析中...' : '解析文本'}
         </motion.button>
@@ -239,56 +258,55 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
     <div className="space-y-6">
       {parseResult && (
         <>
-          <div className={`p-5 rounded-xl border ${
-            parseResult.success
-              ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 border-emerald-200 dark:border-emerald-700'
-              : 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/50 dark:to-red-900/30 border-red-200 dark:border-red-700'
-          }`}>
+          <div className="p-5 rounded-lg" style={{
+            backgroundColor: parseResult.success ? 'rgba(16,185,129,0.08)' : 'rgba(198,69,69,0.08)',
+            border: `1px solid ${parseResult.success ? 'rgba(16,185,129,0.3)' : 'rgba(198,69,69,0.3)'}`,
+          }}>
             <div className="flex items-center gap-3 mb-3">
               {parseResult.success ? (
-                <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <CheckCircle className="w-5 h-5" style={{color: '#10b981'}} />
               ) : (
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <AlertCircle className="w-5 h-5" style={{color: 'var(--color-error)'}} />
               )}
-              <span className="font-semibold text-lg">
+              <span className="font-semibold text-lg" style={{color: 'var(--color-ink)'}}>
                 {parseResult.success ? '解析成功' : '解析失败'}
               </span>
               {parseResult.success && (
-                <span className="text-sm text-slate-600 dark:text-slate-400 ml-auto">
-                  置信度: <span className="font-semibold text-emerald-700 dark:text-emerald-300">{(parseResult.confidence * 100).toFixed(0)}%</span>
+                <span className="text-sm ml-auto" style={{color: 'var(--color-muted)'}}>
+                  置信度: <span className="font-semibold" style={{color: '#10b981'}}>{(parseResult.confidence * 100).toFixed(0)}%</span>
                 </span>
               )}
             </div>
 
             {parseResult.success && parseResult.data && (
-              <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-4 rounded-lg space-y-2.5 text-sm border border-slate-200/50 dark:border-slate-700/50">
+              <div className="p-4 rounded-lg space-y-2.5 text-sm" style={{backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-hairline)'}}>
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">公司:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{parseResult.data.companyName}</span>
+                  <span className="font-semibold w-20" style={{color: 'var(--color-body-text)'}}>公司:</span>
+                  <span className="font-medium" style={{color: 'var(--color-ink)'}}>{parseResult.data.companyName}</span>
                 </div>
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">岗位:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{parseResult.data.position}</span>
+                  <span className="font-semibold w-20" style={{color: 'var(--color-body-text)'}}>岗位:</span>
+                  <span className="font-medium" style={{color: 'var(--color-ink)'}}>{parseResult.data.position}</span>
                 </div>
                 <div className="flex">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">时间:</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-medium">{dayjs(parseResult.data.interviewTime).format('YYYY-MM-DD HH:mm')}</span>
+                  <span className="font-semibold w-20" style={{color: 'var(--color-body-text)'}}>时间:</span>
+                  <span className="font-medium" style={{color: 'var(--color-ink)'}}>{dayjs(parseResult.data.interviewTime).format('YYYY-MM-DD HH:mm')}</span>
                 </div>
                 {parseResult.data.meetingLink && (
                   <div className="flex">
-                    <span className="font-semibold text-slate-700 dark:text-slate-300 w-20">会议:</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-medium truncate">{parseResult.data.meetingLink}</span>
+                    <span className="font-semibold w-20" style={{color: 'var(--color-body-text)'}}>会议:</span>
+                    <span className="font-medium truncate" style={{color: 'var(--color-ink)'}}>{parseResult.data.meetingLink}</span>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          <details className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-            <summary className="cursor-pointer font-semibold text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+          <details className="p-4 rounded-lg" style={{backgroundColor: 'var(--color-surface-soft)', border: '1px solid var(--color-hairline)'}}>
+            <summary className="cursor-pointer font-semibold text-sm transition-colors" style={{color: 'var(--color-body-text)'}}>
               详细日志
             </summary>
-            <pre className="mt-3 text-xs overflow-auto whitespace-pre-wrap text-slate-600 dark:text-slate-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+            <pre className="mt-3 text-xs overflow-auto whitespace-pre-wrap p-3 rounded-lg" style={{color: 'var(--color-muted)', fontFamily: 'var(--font-mono)', backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-hairline)'}}>
               {parseResult.log}
             </pre>
           </details>
@@ -301,7 +319,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => setStep('text')}
-          className="px-5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium flex items-center gap-2 transition-all"
+          className="px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-all"
+          style={{color: 'var(--color-body-text)'}}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
         >
           <ChevronLeft className="w-4 h-4" />
           重新输入
@@ -311,7 +332,8 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={() => setStep('form')}
-          className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-400 text-white rounded-xl font-medium shadow-lg hover:shadow-xl flex items-center gap-2 transition-all"
+          className="px-5 py-2.5 text-white rounded-lg font-medium flex items-center gap-2 transition-all"
+          style={{backgroundColor: 'var(--color-primary)'}}
         >
           {parseResult?.success ? '确认并编辑' : '手动输入'}
           <ChevronRight className="w-4 h-4" />
@@ -323,50 +345,54 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
   const renderForm = () => (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-          公司名称 <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>
+          公司名称 <span style={{color: 'var(--color-error)'}}>*</span>
         </label>
         <input
           type="text"
           value={formData.companyName}
           onChange={(e) => handleFormChange('companyName', e.target.value)}
           required
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+          className={inputClass}
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-          岗位 <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>
+          岗位 <span style={{color: 'var(--color-error)'}}>*</span>
         </label>
         <input
           type="text"
           value={formData.position}
           onChange={(e) => handleFormChange('position', e.target.value)}
           required
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+          className={inputClass}
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-          面试时间 <span className="text-red-500">*</span>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>
+          面试时间 <span style={{color: 'var(--color-error)'}}>*</span>
         </label>
         <input
           type="datetime-local"
           value={formData.interviewTime ? dayjs(formData.interviewTime).format('YYYY-MM-DDTHH:mm') : ''}
           onChange={(e) => handleFormChange('interviewTime', e.target.value)}
           required
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+          className={inputClass}
+          style={inputStyle}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">面试形式</label>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>面试形式</label>
         <select
           value={formData.interviewType}
           onChange={(e) => handleFormChange('interviewType', e.target.value)}
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+          className={inputClass}
+          style={inputStyle}
         >
           <option value="VIDEO">视频面试</option>
           <option value="ONSITE">现场面试</option>
@@ -375,50 +401,54 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">会议链接</label>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>会议链接</label>
         <input
           type="url"
           value={formData.meetingLink}
           onChange={(e) => handleFormChange('meetingLink', e.target.value)}
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+          className={inputClass}
+          style={inputStyle}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">第几轮面试</label>
+          <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>第几轮面试</label>
           <input
             type="number"
             min="1"
             value={formData.roundNumber}
             onChange={(e) => handleFormChange('roundNumber', parseInt(e.target.value))}
-            className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+            className={inputClass}
+            style={inputStyle}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">面试官</label>
+          <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>面试官</label>
           <input
             type="text"
             value={formData.interviewer}
             onChange={(e) => handleFormChange('interviewer', e.target.value)}
-            className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all"
+            className={inputClass}
+            style={inputStyle}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">备注</label>
+        <label className="block text-sm font-semibold mb-2" style={{color: 'var(--color-body-text)'}}>备注</label>
         <textarea
           value={formData.notes}
           onChange={(e) => handleFormChange('notes', e.target.value)}
           rows={3}
-          className="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 dark:focus:border-primary-400 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 resize-none transition-all"
+          className={`${inputClass} resize-none`}
+          style={inputStyle}
         />
       </div>
 
       {submitError && (
-        <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 flex items-start gap-3 text-red-600 dark:text-red-400">
+        <div className="p-4 rounded-lg flex items-start gap-3" style={{backgroundColor: 'rgba(198,69,69,0.08)', border: '1px solid rgba(198,69,69,0.3)', color: 'var(--color-error)'}}>
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div className="text-sm font-medium">{submitError}</div>
         </div>
@@ -431,7 +461,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={handleReset}
-            className="px-5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-all"
+            className="px-5 py-2.5 rounded-lg font-medium transition-all"
+            style={{color: 'var(--color-body-text)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             重置
           </motion.button>
@@ -441,7 +474,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={() => onDelete(initialData.id!)}
-            className="px-5 py-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl font-medium flex items-center gap-2 transition-all"
+            className="px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 transition-all"
+            style={{color: 'var(--color-error)', border: '1px solid rgba(198,69,69,0.3)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(198,69,69,0.08)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             <Trash2 className="w-4 h-4" />
             删除
@@ -453,7 +489,10 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-all"
+            className="px-5 py-2.5 rounded-lg font-medium transition-all"
+            style={{color: 'var(--color-body-text)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             取消
           </motion.button>
@@ -462,7 +501,8 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={submitting}
-            className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 dark:from-primary-500 dark:to-primary-400 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-2.5 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            style={{backgroundColor: 'var(--color-primary)'}}
           >
             {submitting ? '保存中...' : '保存'}
           </motion.button>
@@ -476,24 +516,29 @@ export const InterviewFormModal: React.FC<InterviewFormModalProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{backgroundColor: 'rgba(20,20,19,0.5)'}}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200/50 dark:border-slate-700/50"
+        className="rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        style={{backgroundColor: 'var(--color-surface-card)', border: '1px solid var(--color-hairline)'}}
       >
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-2xl font-display font-bold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between p-6" style={{borderBottom: '1px solid var(--color-hairline)'}}>
+          <h2 className="text-2xl font-bold" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>
             {mode === 'edit' ? '编辑面试' : '添加面试'}
           </h2>
           <motion.button
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
-            className="p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+            className="p-2 rounded-lg transition-all"
+            style={{color: 'var(--color-muted)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             <X className="w-5 h-5" />
           </motion.button>

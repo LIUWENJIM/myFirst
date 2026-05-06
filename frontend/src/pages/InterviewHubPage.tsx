@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import {useState, useEffect, useCallback} from 'react';
+import {useNavigate, Link} from 'react-router-dom';
+import {AnimatePresence, motion} from 'framer-motion';
 import {
   ChevronDown, ChevronUp, FileStack, FileText, Loader2, Mic,
   MessageSquare, RefreshCw, Sparkles,
 } from 'lucide-react';
-import { type SkillDTO } from '../api/skill';
-import { interviewApi, type TextSessionMeta } from '../api/interview';
-import { voiceInterviewApi, type SessionMeta } from '../api/voiceInterview';
-import { getSkillIcon } from '../utils/skillIcons';
-import { getTemplateName } from '../utils/voiceInterview';
-import { getScoreTextColor } from '../utils/score';
-import { formatDateTime } from '../utils/date';
+import {type SkillDTO} from '../api/skill';
+import {interviewApi, type TextSessionMeta} from '../api/interview';
+import {voiceInterviewApi, type SessionMeta} from '../api/voiceInterview';
+import {getSkillIcon} from '../utils/skillIcons';
+import {getTemplateName} from '../utils/voiceInterview';
+import {getScoreTextColor} from '../utils/score';
+import {formatDateTime} from '../utils/date';
 import {
   useInterviewConfig,
   CUSTOM_SKILL_ID,
@@ -19,7 +19,6 @@ import {
   DIFFICULTY_OPTIONS,
 } from '../hooks/useInterviewConfig';
 
-// 统一的面试记录项
 interface RecentInterviewItem {
   id: string;
   type: 'text' | 'voice';
@@ -33,10 +32,8 @@ interface RecentInterviewItem {
 
 export default function InterviewHubPage() {
   const navigate = useNavigate();
+  const config = useInterviewConfig({autoLoad: false});
 
-  const config = useInterviewConfig({ autoLoad: false });
-
-  // === 最近面试记录 ===
   const [recentInterviews, setRecentInterviews] = useState<RecentInterviewItem[]>([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
 
@@ -78,7 +75,6 @@ export default function InterviewHubPage() {
     }
   }, []);
 
-  // 初始加载：skills 和 resumes 并行，再用 skills 加载面试记录
   useEffect(() => {
     const init = async () => {
       const [skills] = await Promise.all([config.loadSkills(), config.loadResumes()]);
@@ -92,9 +88,7 @@ export default function InterviewHubPage() {
     const selectedSkill = config.selectedSkill;
     const skillName = selectedSkill?.name || '自定义';
 
-    if (config.isCustomStartDisabled) {
-      return;
-    }
+    if (config.isCustomStartDisabled) return;
 
     if (config.mode === 'text') {
       navigate('/interview', {
@@ -112,7 +106,7 @@ export default function InterviewHubPage() {
         },
       });
     } else {
-      const params = new URLSearchParams({ skillId: config.skillId, difficulty: config.difficulty });
+      const params = new URLSearchParams({skillId: config.skillId, difficulty: config.difficulty});
       navigate(`/voice-interview?${params.toString()}`, {
         state: {
           voiceConfig: {
@@ -130,25 +124,28 @@ export default function InterviewHubPage() {
     }
   };
 
+  const selectStyle = (selected: boolean): React.CSSProperties => ({
+    borderColor: selected ? 'var(--color-primary)' : 'var(--color-hairline)',
+    backgroundColor: selected ? 'var(--color-surface-soft)' : 'var(--color-surface-card)',
+  });
+
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* 页面标题 */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-          <div className="page-title-icon">
-            <Sparkles className="w-5 h-5" />
-          </div>
+        <h1 className="page-title flex items-center gap-2.5">
+          <Sparkles className="w-5 h-5" style={{color: 'var(--color-primary)'}}/>
           模拟面试
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1.5 ml-12">选择面试模式和方向，快速开始练习</p>
+        <p className="page-subtitle">选择面试模式和方向，快速开始练习</p>
       </div>
 
-      {/* 配置区域 */}
-      <div className="card-container p-6 mb-8">
+      {/* 配置区域 — feature-card style */}
+      <div className="card-container p-6 mb-6">
         <div className="space-y-6">
           {/* 面试模式 */}
           <div>
-            <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <label className="block mb-2.5 text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>
               面试模式
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -157,14 +154,14 @@ export default function InterviewHubPage() {
                   value: 'text' as InterviewMode,
                   label: '文字面试',
                   icon: FileText,
-                  desc: '推荐：更稳定，更适合系统化刷题与复盘',
+                  desc: '更稳定，适合系统化刷题与复盘',
                   recommended: true,
                 },
                 {
                   value: 'voice' as InterviewMode,
                   label: '语音面试',
                   icon: Mic,
-                  desc: '实时语音对话，更偏临场模拟',
+                  desc: '实时语音对话，偏临场模拟',
                   recommended: false,
                 },
               ]).map(opt => {
@@ -174,23 +171,23 @@ export default function InterviewHubPage() {
                   <button
                     key={opt.value}
                     onClick={() => config.setMode(opt.value)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-200 text-left
-                      ${selected
-                        ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                      }`}
+                    className="flex items-center gap-3 p-3.5 rounded-lg border transition-colors text-left cursor-pointer"
+                    style={selectStyle(selected)}
                   >
-                    <Icon className={`w-6 h-6 flex-shrink-0 ${selected ? 'text-primary-500' : 'text-slate-400'}`} />
+                    <Icon className="w-5 h-5 flex-shrink-0" style={{color: selected ? 'var(--color-primary)' : 'var(--color-muted)'}}/>
                     <div className="min-w-0">
-                      <p className={`font-semibold text-sm flex items-center gap-2 ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-900 dark:text-white'}`}>
+                      <p className="text-sm font-medium flex items-center gap-2" style={{color: selected ? 'var(--color-primary)' : 'var(--color-ink)'}}>
                         <span>{opt.label}</span>
                         {opt.recommended && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                            style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-success)'}}
+                          >
                             推荐
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{opt.desc}</p>
+                      <p className="text-xs mt-0.5" style={{color: 'var(--color-muted)'}}>{opt.desc}</p>
                     </div>
                   </button>
                 );
@@ -200,12 +197,12 @@ export default function InterviewHubPage() {
 
           {/* 面试方向 */}
           <div>
-            <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <label className="block mb-2.5 text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>
               面试方向
             </label>
             {config.loadingSkills ? (
-              <div className="flex items-center gap-2 py-4 text-slate-400">
-                <Loader2 className="w-4 h-4 animate-spin" />
+              <div className="flex items-center gap-2 py-3" style={{color: 'var(--color-muted-soft)'}}>
+                <Loader2 className="w-4 h-4 animate-spin"/>
                 <span className="text-sm">加载中...</span>
               </div>
             ) : (
@@ -218,48 +215,45 @@ export default function InterviewHubPage() {
                     <button
                       key={skill.id}
                       onClick={() => config.setSkillId(skill.id)}
-                      className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all duration-200 text-left
-                        ${selected
-                          ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                        }`}
+                      className="flex items-center gap-2 p-2.5 rounded-lg border transition-colors text-left cursor-pointer"
+                      style={selectStyle(selected)}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
-                        selected ? skill.display?.iconBg || 'bg-primary-100 dark:bg-primary-900/50' : 'bg-slate-100 dark:bg-slate-700'
-                      }`}>
+                      <div
+                        className="w-7 h-7 rounded flex items-center justify-center text-sm flex-shrink-0"
+                        style={{backgroundColor: selected ? 'var(--color-surface-card)' : 'var(--color-surface-soft)'}}
+                      >
                         {IconComponent
-                          ? <IconComponent className={`w-4 h-4 ${selected ? (skill.display?.iconColor || 'text-primary-600') : 'text-slate-500 dark:text-slate-400'}`} />
-                          : <span className={selected ? (skill.display?.iconColor || 'text-primary-600') : ''}>{fallbackEmoji}</span>
+                          ? <IconComponent className="w-3.5 h-3.5" style={{color: selected ? 'var(--color-primary)' : 'var(--color-muted)'}}/>
+                          : <span>{fallbackEmoji}</span>
                         }
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-xs font-medium block truncate ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}>
-                          {skill.name}
-                        </span>
-                      </div>
+                      <span className="text-xs font-medium truncate" style={{color: selected ? 'var(--color-primary)' : 'var(--color-body-text)'}}>
+                        {skill.name}
+                      </span>
                     </button>
                   );
                 })}
                 {/* 自定义按钮 */}
                 <button
                   onClick={() => config.setSkillId(CUSTOM_SKILL_ID)}
-                  className={`flex items-center gap-2.5 p-3 rounded-xl border-2 border-dashed transition-all duration-200 text-left
-                    ${config.isCustomSkill
-                      ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600'
-                    }`}
+                  className="flex items-center gap-2 p-2.5 rounded-lg border border-dashed transition-colors text-left cursor-pointer"
+                  style={{
+                    borderColor: config.isCustomSkill ? 'var(--color-primary)' : 'var(--color-hairline)',
+                    backgroundColor: config.isCustomSkill ? 'var(--color-surface-soft)' : 'transparent',
+                  }}
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    config.isCustomSkill ? 'bg-primary-100 dark:bg-primary-900/50' : 'bg-slate-100 dark:bg-slate-700'
-                  }`}>
+                  <div
+                    className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
+                    style={{backgroundColor: config.isCustomSkill ? 'var(--color-surface-card)' : 'var(--color-surface-soft)'}}
+                  >
                     {(() => {
                       const CustomIcon = getSkillIcon(CUSTOM_SKILL_ID);
                       return CustomIcon
-                        ? <CustomIcon className={`w-4 h-4 ${config.isCustomSkill ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400'}`} />
-                        : <span className="text-sm">✨</span>;
+                        ? <CustomIcon className="w-3.5 h-3.5" style={{color: config.isCustomSkill ? 'var(--color-primary)' : 'var(--color-muted)'}}/>
+                        : <span className="text-xs">✨</span>;
                     })()}
                   </div>
-                  <span className={`text-xs font-medium ${config.isCustomSkill ? 'text-primary-700 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <span className="text-xs font-medium" style={{color: config.isCustomSkill ? 'var(--color-primary)' : 'var(--color-muted)'}}>
                     自定义 JD
                   </span>
                 </button>
@@ -271,47 +265,62 @@ export default function InterviewHubPage() {
           <AnimatePresence>
             {config.isCustomSkill && (
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{height: 0, opacity: 0}}
+                animate={{height: 'auto', opacity: 1}}
+                exit={{height: 0, opacity: 0}}
                 className="overflow-hidden"
               >
-                <div className="space-y-3 bg-primary-50/40 dark:bg-primary-900/15 rounded-xl p-5 border border-primary-100 dark:border-primary-800/30">
+                <div
+                  className="space-y-3 rounded-lg p-4 border"
+                  style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}
+                >
                   <textarea
                     value={config.customJdText}
                     onChange={e => config.setCustomJdText(e.target.value)}
                     placeholder="粘贴目标岗位的职位描述（JD），至少 50 字..."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700
-                      bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white
-                      placeholder:text-slate-400 resize-none focus:outline-none focus:ring-2
-                      focus:ring-primary-500/50 focus:border-primary-400 transition-shadow"
+                    className="w-full px-3 py-2.5 rounded-lg border text-sm resize-none focus:outline-none transition-colors"
+                    style={{
+                      borderColor: 'var(--color-hairline)',
+                      backgroundColor: 'var(--color-canvas)',
+                      color: 'var(--color-ink)',
+                    }}
+                    onFocus={e => {
+                      (e.target as HTMLElement).style.borderColor = 'var(--color-primary)';
+                      (e.target as HTMLElement).style.boxShadow = '0 0 0 3px rgba(204,120,92,0.15)';
+                    }}
+                    onBlur={e => {
+                      (e.target as HTMLElement).style.borderColor = 'var(--color-hairline)';
+                      (e.target as HTMLElement).style.boxShadow = 'none';
+                    }}
                   />
                   <button
                     onClick={config.handleParseJd}
                     disabled={config.parsingJd || !config.customJdText}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                      bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50
-                      disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{backgroundColor: 'var(--color-primary)'}}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary-active)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-primary)'; }}
                   >
-                    {config.parsingJd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {config.parsingJd ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
                     解析面试方向
                   </button>
                   {config.customCategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {config.customCategories.map((cat, i) => (
                         <span
                           key={i}
-                          className="px-3 py-1 text-xs font-medium rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                          className="px-2 py-0.5 text-xs font-medium rounded"
+                          style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-primary)'}}
                         >
                           {cat.label}
-                          <span className="ml-1 text-[10px] text-primary-500">({cat.priority})</span>
+                          <span className="ml-1 text-[10px]" style={{color: 'var(--color-primary)'}}>({cat.priority})</span>
                         </span>
                       ))}
                     </div>
                   )}
                   {config.jdNeedsReparse && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <p className="text-xs" style={{color: 'var(--color-warning)'}}>
                       JD 已修改，请重新解析后再开始面试。
                     </p>
                   )}
@@ -322,7 +331,7 @@ export default function InterviewHubPage() {
 
           {/* 难度 */}
           <div>
-            <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <label className="block mb-2.5 text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>
               难度
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -332,16 +341,13 @@ export default function InterviewHubPage() {
                   <button
                     key={opt.value}
                     onClick={() => config.setDifficulty(opt.value)}
-                    className={`py-3 px-4 rounded-xl border-2 transition-all duration-200 text-center
-                      ${selected
-                        ? 'border-primary-500 bg-primary-50/80 dark:bg-primary-900/20'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
-                      }`}
+                    className="py-2.5 px-3 rounded-lg border transition-colors text-center cursor-pointer"
+                    style={selectStyle(selected)}
                   >
-                    <p className={`text-sm font-semibold ${selected ? 'text-primary-700 dark:text-primary-300' : 'text-slate-700 dark:text-slate-300'}`}>
+                    <p className="text-sm font-medium" style={{color: selected ? 'var(--color-primary)' : 'var(--color-body-strong)'}}>
                       {opt.label}
                     </p>
-                    <p className="text-xs text-slate-400">{opt.desc}</p>
+                    <p className="text-[11px] mt-0.5" style={{color: 'var(--color-muted-soft)'}}>{opt.desc}</p>
                   </button>
                 );
               })}
@@ -351,35 +357,44 @@ export default function InterviewHubPage() {
           {/* 更多选项 */}
           <button
             onClick={() => config.setShowMore(!config.showMore)}
-            className="w-full flex items-center gap-2 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+            className="w-full flex items-center gap-2 py-1.5 text-sm transition-colors"
+            style={{color: 'var(--color-muted-soft)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--color-muted-soft)'; }}
           >
-            {config.showMore ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {config.showMore ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
             <span>更多选项</span>
-            <div className="flex-1 border-t border-slate-200 dark:border-slate-700" />
+            <div className="flex-1 border-t" style={{borderColor: 'var(--color-hairline)'}}/>
           </button>
 
           <AnimatePresence>
             {config.showMore && (
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
+                initial={{height: 0, opacity: 0}}
+                animate={{height: 'auto', opacity: 1}}
+                exit={{height: 0, opacity: 0}}
                 className="overflow-hidden space-y-4"
               >
                 {/* 简历选择 */}
-                <div className="bg-gradient-to-br from-primary-50/80 to-emerald-50/60 dark:from-primary-900/20 dark:to-emerald-900/10 rounded-xl p-4 border border-primary-100/60 dark:border-primary-800/30">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FileStack className="w-5 h-5 text-primary-500" />
-                    <p className="font-semibold text-sm text-primary-900 dark:text-primary-100">
+                <div
+                  className="rounded-lg p-4 border"
+                  style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}
+                >
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <FileStack className="w-4 h-4" style={{color: 'var(--color-primary)'}}/>
+                    <p className="text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>
                       基于简历面试（可选）
                     </p>
                   </div>
                   <select
                     value={config.resumeId || ''}
                     onChange={e => config.setResumeId(e.target.value ? parseInt(e.target.value) : undefined)}
-                    className="w-full px-4 py-2.5 rounded-lg border border-primary-200 dark:border-primary-700/50
-                      bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white
-                      focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-shadow"
+                    className="w-full px-3 py-2 rounded-lg border text-sm focus:outline-none transition-colors"
+                    style={{
+                      borderColor: 'var(--color-hairline)',
+                      backgroundColor: 'var(--color-canvas)',
+                      color: 'var(--color-ink)',
+                    }}
                   >
                     <option value="">不使用简历（通用提问）</option>
                     {config.resumes.map(r => (
@@ -391,7 +406,7 @@ export default function InterviewHubPage() {
                 {/* 文字面试 - 题目数 */}
                 {config.mode === 'text' && (
                   <div>
-                    <label className="flex items-center gap-2 mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <label className="block mb-2.5 text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>
                       题目数量
                     </label>
                     <div className="flex gap-2">
@@ -399,11 +414,11 @@ export default function InterviewHubPage() {
                         <button
                           key={n}
                           onClick={() => config.setQuestionCount(n)}
-                          className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all
-                            ${config.questionCount === n
-                              ? 'bg-primary-500 text-white shadow-sm'
-                              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                            }`}
+                          className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: config.questionCount === n ? 'var(--color-primary)' : 'var(--color-surface-card)',
+                            color: config.questionCount === n ? 'var(--color-on-primary)' : 'var(--color-body-text)',
+                          }}
                         >
                           {n} 题
                         </button>
@@ -414,12 +429,15 @@ export default function InterviewHubPage() {
 
                 {/* 语音面试 - 时长 */}
                 {config.mode === 'voice' && (
-                  <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{backgroundColor: 'var(--color-surface-soft)', borderColor: 'var(--color-hairline)'}}
+                  >
                     <div className="flex items-center justify-between mb-3">
-                      <p className="font-semibold text-sm text-slate-900 dark:text-white">计划面试时长</p>
-                      <div className="text-2xl font-bold tabular-nums text-primary-600 dark:text-primary-400">
+                      <p className="text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>计划面试时长</p>
+                      <div className="text-xl font-semibold tabular-nums" style={{color: 'var(--color-primary)'}}>
                         {config.plannedDuration}
-                        <span className="text-xs font-normal text-slate-400 ml-0.5">min</span>
+                        <span className="text-xs font-normal ml-0.5" style={{color: 'var(--color-muted-soft)'}}>min</span>
                       </div>
                     </div>
                     <input
@@ -429,11 +447,11 @@ export default function InterviewHubPage() {
                       step="5"
                       value={config.plannedDuration}
                       onChange={e => config.setPlannedDuration(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer
-                        [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4
-                        [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full
-                        [&::-webkit-slider-thumb]:bg-primary-500 [&::-webkit-slider-thumb]:cursor-pointer
-                        [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:shadow-primary-500/30"
+                      className="w-full h-1.5 rounded-lg appearance-none cursor-pointer"
+                      style={{
+                        background: 'var(--color-hairline)',
+                        accentColor: 'var(--color-primary)',
+                      }}
                     />
                   </div>
                 )}
@@ -443,39 +461,37 @@ export default function InterviewHubPage() {
         </div>
 
         {/* 开始面试按钮 */}
-        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/80">
-          <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="mt-6 pt-5 border-t" style={{borderColor: 'var(--color-hairline)'}}>
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-white">准备好了吗？</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+              <p className="text-sm font-medium" style={{color: 'var(--color-body-strong)'}}>准备好了吗？</p>
+              <p className="text-xs mt-0.5" style={{color: 'var(--color-muted-soft)'}}>
                 {config.mode === 'text' ? '文字面试将逐题作答，系统自动评分' : '语音面试模拟真实对话场景'}
               </p>
             </div>
-            <motion.button
+            <button
               onClick={handleStart}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
               disabled={config.isCustomStartDisabled}
-              className="btn-cta !w-auto px-8"
+              className="btn-cta !w-auto px-6"
             >
-              <Sparkles className="w-4 h-4 inline-block mr-2 -mt-0.5" />
               开始{config.mode === 'text' ? '文字' : '语音'}面试
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* 最近面试记录 */}
-      <div className="card-container p-6">
+      {/* 最近面试记录 — feature-card */}
+      <div className="card-container p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary-500" />
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white">最近面试记录</h2>
+            <MessageSquare className="w-4 h-4" style={{color: 'var(--color-primary)'}}/>
+            <h2 className="text-sm font-semibold" style={{color: 'var(--color-ink)'}}>最近面试记录</h2>
           </div>
           {recentInterviews.length > 0 && (
             <Link
               to="/interviews"
-              className="text-sm text-primary-500 hover:text-primary-600 font-semibold transition-colors"
+              className="text-xs font-medium transition-colors"
+              style={{color: 'var(--color-primary)'}}
             >
               查看全部 →
             </Link>
@@ -484,24 +500,24 @@ export default function InterviewHubPage() {
 
         {loadingRecent ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
+            <Loader2 className="w-5 h-5 animate-spin" style={{color: 'var(--color-primary)'}}/>
           </div>
         ) : recentInterviews.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10">
-            <MessageSquare className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-slate-400 dark:text-slate-500 text-sm">暂无面试记录，选择方向开始第一次面试吧</p>
+            <MessageSquare className="w-8 h-8 mb-2" style={{color: 'var(--color-muted-soft)'}}/>
+            <p className="text-sm" style={{color: 'var(--color-muted)'}}>暂无面试记录，选择方向开始第一次面试吧</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1">
             {recentInterviews.map((item, index) => {
               const isCompleted = item.evaluateStatus === 'COMPLETED' || item.status === 'EVALUATED';
               const isEvaluating = item.evaluateStatus === 'PENDING' || item.evaluateStatus === 'PROCESSING';
               return (
                 <motion.div
                   key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{opacity: 0, y: 6}}
+                  animate={{opacity: 1, y: 0}}
+                  transition={{delay: index * 0.03}}
                   onClick={() => {
                     if (item.type === 'text') {
                       navigate(`/interviews/${item.id}`);
@@ -509,48 +525,55 @@ export default function InterviewHubPage() {
                       navigate(`/voice-interview/${item.voiceSessionId}/evaluation`);
                     }
                   }}
-                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                  className="flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer group"
+                  style={{backgroundColor: 'transparent'}}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                 >
                   {/* 类型图标 */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    item.type === 'text'
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                      : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                  }`}>
-                    {item.type === 'text' ? <FileText className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  <div
+                    className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: item.type === 'text' ? 'var(--color-surface-card)' : 'var(--color-surface-card)',
+                      color: item.type === 'text' ? 'var(--color-primary)' : 'var(--color-accent-teal)',
+                    }}
+                  >
+                    {item.type === 'text' ? <FileText className="w-4 h-4"/> : <Mic className="w-4 h-4"/>}
                   </div>
 
                   {/* 信息 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-slate-800 dark:text-white truncate">{item.title}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                        item.type === 'text'
-                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                          : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-                      }`}>
+                      <span className="text-sm font-medium truncate" style={{color: 'var(--color-ink)'}}>{item.title}</span>
+                      <span
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        style={{
+                          backgroundColor: 'var(--color-surface-card)',
+                          color: item.type === 'text' ? 'var(--color-primary)' : 'var(--color-accent-teal)',
+                        }}
+                      >
                         {item.type === 'text' ? '文字' : '语音'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs" style={{color: 'var(--color-muted-soft)'}}>
                         {formatDateTime(item.createdAt)}
                       </span>
                       {isEvaluating && (
-                        <span className="flex items-center gap-1 text-xs text-blue-500">
-                          <RefreshCw className="w-3 h-3 animate-spin" /> 评估中
+                        <span className="flex items-center gap-1 text-xs" style={{color: 'var(--color-primary)'}}>
+                          <RefreshCw className="w-3 h-3 animate-spin"/> 评估中
                         </span>
                       )}
                       {isCompleted && item.overallScore !== null && (
-                        <span className="text-xs text-slate-600 dark:text-slate-300">
-                          得分 <span className={`font-bold ${getScoreTextColor(item.overallScore!)}`}>{item.overallScore}</span>
+                        <span className="text-xs" style={{color: 'var(--color-muted)'}}>
+                          得分 <span className={`font-semibold ${getScoreTextColor(item.overallScore!)}`}>{item.overallScore}</span>
                         </span>
                       )}
                     </div>
                   </div>
 
                   {/* 箭头 */}
-                  <svg className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-4 h-4 flex-shrink-0 transition-colors" style={{color: 'var(--color-hairline)'}} viewBox="0 0 24 24" fill="none">
                     <polyline points="9,18 15,12 9,6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </motion.div>
@@ -559,7 +582,6 @@ export default function InterviewHubPage() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

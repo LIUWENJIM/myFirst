@@ -57,7 +57,6 @@ export default function Interview({
   const customCategories = initialConfig?.customCategories;
   const jdText = initialConfig?.jdText;
 
-  // 自动开始面试（恢复已有会话 或 创建新会话）
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
@@ -104,7 +103,6 @@ export default function Interview({
       const existingSession = await interviewApi.getSession(sessionId);
       initSession(existingSession);
 
-      // 恢复已填写的答案
       const currentQ = existingSession.questions[existingSession.currentQuestionIndex];
       if (currentQ?.userAnswer) {
         setAnswer(currentQ.userAnswer);
@@ -125,7 +123,6 @@ export default function Interview({
       const currentQ = s.questions[idx];
       setCurrentQuestion(currentQ);
 
-      // 重建消息历史
       const restoredMessages: Message[] = [];
       for (let i = 0; i <= idx; i++) {
         const q = s.questions[i];
@@ -201,34 +198,34 @@ export default function Interview({
     }
   };
 
-  // 加载中
   if (isCreating) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-slate-200 border-t-primary-500 rounded-full mx-auto mb-4 animate-spin" />
-          <p className="text-slate-500 dark:text-slate-400">正在生成面试题目...</p>
+          <div className="w-10 h-10 border-3 rounded-full mx-auto mb-4 animate-spin" style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}} />
+          <p style={{color: 'var(--color-muted)'}}>正在生成面试题目...</p>
         </div>
       </div>
     );
   }
 
-  // 错误状态
   if (error && !session) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
+          <p className="mb-4" style={{color: 'var(--color-error)'}}>{error}</p>
           <div className="flex gap-3 justify-center">
             <button
               onClick={startInterview}
-              className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/25 transition-all active:scale-[0.98]"
+              className="px-5 py-2.5 rounded-lg text-white font-medium transition-all active:scale-[0.98]"
+              style={{backgroundColor: 'var(--color-primary)'}}
             >
               重试
             </button>
             <button
               onClick={onBack}
-              className="px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
+              className="px-5 py-2.5 border rounded-lg font-medium transition-all active:scale-[0.98]"
+              style={{borderColor: 'var(--color-hairline)', color: 'var(--color-body-text)', backgroundColor: 'var(--color-surface-card)'}}
             >
               返回
             </button>
@@ -274,7 +271,6 @@ export default function Interview({
         />
       </motion.div>
 
-      {/* 提前交卷确认对话框 */}
       <ConfirmDialog
         open={showCompleteConfirm}
         title="提前交卷"

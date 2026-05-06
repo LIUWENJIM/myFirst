@@ -54,7 +54,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   // Calculate min and max time range based on events
   const getMinMaxTime = () => {
     const currentDay = dayjs(date).startOf('day');
-    
+
     // Default working hours: 08:00 - 22:00
     let minHour = 8;
     let maxHour = 22;
@@ -64,7 +64,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     events.forEach(event => {
       const eventStart = dayjs(event.start);
       const eventEnd = dayjs(event.end);
-      
+
       if (eventStart.isValid() && eventEnd.isValid()) {
         const startHour = eventStart.hour();
         const endHour = eventEnd.hour();
@@ -72,9 +72,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
         if (startHour < minHour) {
           minHour = Math.max(0, startHour);
         }
-        
+
         // Adjust maxHour for late night interviews
-        // If it ends at 23:xx or later (including next day), we need the full range
         if (endHour > maxHour || (endHour === 0 && eventEnd.isAfter(eventStart, 'day'))) {
           maxHour = 23;
           hasLateEvent = true;
@@ -91,8 +90,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     }
 
     const minTime = currentDay.hour(minHour).minute(0).second(0).toDate();
-    // If we have late events, set max to 23:59:59 to show the very end of the day
-    const maxTime = hasLateEvent 
+    const maxTime = hasLateEvent
       ? currentDay.hour(23).minute(59).second(59).toDate()
       : currentDay.hour(maxHour).minute(0).second(0).toDate();
 
@@ -102,8 +100,8 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   const { minTime, maxTime } = getMinMaxTime();
 
   // Final check to prevent react-big-calendar from crashing with invalid min/max
-  const isValidRange = minTime instanceof Date && !isNaN(minTime.getTime()) && 
-                     maxTime instanceof Date && !isNaN(maxTime.getTime()) && 
+  const isValidRange = minTime instanceof Date && !isNaN(minTime.getTime()) &&
+                     maxTime instanceof Date && !isNaN(maxTime.getTime()) &&
                      minTime.getTime() < maxTime.getTime();
 
   const finalMinTime = isValidRange ? minTime : dayjs(date).startOf('day').add(8, 'hour').toDate();
@@ -130,7 +128,7 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-slate-200/50 dark:border-slate-700/50 p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50"
+      className="card-container p-6"
     >
       <DnDCalendar
           localizer={localizer}

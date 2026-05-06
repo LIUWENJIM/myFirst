@@ -63,7 +63,6 @@ export const InterviewSchedulePage: React.FC = () => {
   }, [updateStatus]);
 
   const handleEventDrop = useCallback(async (data: { event: any; start: Date | string; end: Date | string }) => {
-    // Update interview time when dragged
     const interview = interviews.find(i => i.id === data.event.id);
     if (interview) {
       try {
@@ -86,7 +85,6 @@ export const InterviewSchedulePage: React.FC = () => {
   }, [interviews, updateInterview]);
 
   const handleEventResize = useCallback(async (data: { event: any; start: Date | string; end: Date | string }) => {
-    // Update interview duration when resized
     const interview = interviews.find(i => i.id === data.event.id);
     if (interview) {
       try {
@@ -118,8 +116,6 @@ export const InterviewSchedulePage: React.FC = () => {
     setSelectedInterview(null);
   }, [modalMode, selectedInterview, createInterview, updateInterview]);
 
-  // Event drop functionality removed - react-big-calendar doesn't support drag and drop in this version
-
   const handleConfirmChanges = useCallback(async () => {
     for (const [id, newTime] of pendingChanges) {
       const interview = interviews.find(i => i.id === id);
@@ -148,14 +144,14 @@ export const InterviewSchedulePage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-10 h-10 border-3 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-3 rounded-full animate-spin" style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12 text-red-500">
+      <div className="text-center py-12" style={{color: 'var(--color-error)'}}>
         <p>{error}</p>
       </div>
     );

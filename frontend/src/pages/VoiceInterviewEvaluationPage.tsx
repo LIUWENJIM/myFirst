@@ -131,39 +131,39 @@ export default function VoiceInterviewEvaluationPage() {
     };
   }, [evaluation, sessionId]);
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-slate-200 dark:border-slate-700 border-t-primary-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-600 dark:text-slate-300">
+          <div className="w-10 h-10 border-3 rounded-full animate-spin mx-auto mb-4" style={{borderColor: 'var(--color-hairline)', borderTopColor: 'var(--color-primary)'}} />
+          <p style={{color: 'var(--color-muted)'}}>
             {evaluateStatus === 'PROCESSING' ? 'AI 正在分析面试表现...' : '正在生成评估报告...'}
           </p>
-          <p className="text-slate-400 text-sm mt-2">预计需要 10-30 秒</p>
+          <p className="text-sm mt-2" style={{color: 'var(--color-muted-soft)'}}>预计需要 10-30 秒</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error && !evaluation) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-center">
-          <p className="text-slate-600 dark:text-slate-300 text-lg mb-2">评估报告生成失败</p>
-          <p className="text-slate-400 text-sm mb-6">{error}</p>
+          <p className="text-lg mb-2" style={{color: 'var(--color-muted)'}}>评估报告生成失败</p>
+          <p className="text-sm mb-6" style={{color: 'var(--color-muted-soft)'}}>{error}</p>
           <div className="flex items-center gap-3 justify-center">
             <button
               onClick={handleRetry}
-              className="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/25 transition-all active:scale-[0.98] flex items-center gap-2"
+              className="px-6 py-2.5 rounded-lg text-white font-medium transition-all active:scale-[0.98] flex items-center gap-2"
+              style={{backgroundColor: 'var(--color-primary)'}}
             >
               <RefreshCw className="w-4 h-4" />
               重试
             </button>
             <button
               onClick={() => navigate('/interviews')}
-              className="px-6 py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all active:scale-[0.98]"
+              className="px-6 py-2.5 rounded-lg font-medium border transition-all active:scale-[0.98]"
+              style={{backgroundColor: 'var(--color-surface-card)', color: 'var(--color-body-text)', borderColor: 'var(--color-hairline)'}}
             >
               返回列表
             </button>
@@ -183,13 +183,16 @@ export default function VoiceInterviewEvaluationPage() {
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate('/interviews')}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{color: 'var(--color-muted)'}}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface-soft)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">面试评估报告</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">语音会话 ID: {sessionId}</p>
+            <h1 className="text-xl font-bold" style={{color: 'var(--color-ink)', fontFamily: 'var(--font-display)'}}>面试评估报告</h1>
+            <p className="text-sm" style={{color: 'var(--color-muted)'}}>语音会话 ID: {sessionId}</p>
           </div>
         </div>
         <InterviewDetailPanel interview={interviewDetail} />
