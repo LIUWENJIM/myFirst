@@ -176,27 +176,27 @@
 
 直达招聘：
 
-![直达招聘](docs/screenshots/direct-hire.png)
+![直达招聘](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/direct-hire.png)
 
 面试中心：
 
-![面试中心](docs/screenshots/interview-hub.png)
+![面试中心](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/interview-hub.png)
 
 简历库：
 
-![简历库](docs/screenshots/resume-history.png)
+![简历库](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/resume-history.png)
 
 面试安排：
 
-![面试安排](docs/screenshots/interview-schedule.png)
+![面试安排](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/interview-schedule.png)
 
 知识库管理：
 
-![知识库管理](docs/screenshots/knowledge-base.png)
+![知识库管理](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/knowledge-base.png)
 
 多模型切换 + 语音服务设置：
 
-![设置页](docs/screenshots/settings.png)
+![设置页](https://raw.githubusercontent.com/LIUWENJIM/myFirst/main/docs/screenshots/settings.png)
 
 ## 项目结构
 
