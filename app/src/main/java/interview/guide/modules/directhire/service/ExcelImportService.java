@@ -60,19 +60,19 @@ public class ExcelImportService {
 
     /**
      * 解析单行数据
-     * Excel列顺序: A=招聘岗位, B=内推码, C=工作地点, D=投递链接, E=发布日期, F=公司名称, G=招聘类型, H=招聘方向, I=备注
+     * Excel列顺序: A=企业名称, B=招聘类型, C=发布时间, D=投递链接, E=所属行业, F=工作地点, G=招聘岗位, H=薪资, I=备注
      */
     private CreateDirectHireRequest parseRow(Row row, CompanyCategory category) {
         // 读取各列数据（按实际Excel列顺序）
-        String jobPosition = getStringValue(row, 0);    // A列：招聘岗位
-        String referralCode = getStringValue(row, 1);   // B列：内推码
-        String workLocation = getStringValue(row, 2);   // C列：工作地点
+        String companyName = getStringValue(row, 0);     // A列：企业名称
+        String recruitType = getStringValue(row, 1);     // B列：招聘类型
+        String publishDate = getStringValue(row, 2);     // C列：发布时间
         String applicationLink = getStringValue(row, 3); // D列：投递链接
-        String publishDate = getStringValue(row, 4);     // E列：发布日期
-        String companyName = getStringValue(row, 5);     // F列：公司名称
-        String recruitType = getStringValue(row, 6);     // G列：招聘类型
-        String recruitDirection = getStringValue(row, 7); // H列：招聘方向
-        String remark = getStringValue(row, 8);           // I列：备注
+        String industry = getStringValue(row, 4);        // E列：所属行业
+        String workLocation = getStringValue(row, 5);    // F列：工作地点
+        String jobPosition = getStringValue(row, 6);     // G列：招聘岗位
+        String salary = getStringValue(row, 7);          // H列：薪资
+        String remark = getStringValue(row, 8);          // I列：备注
 
         // 如果公司名称为空，跳过
         if (companyName == null || companyName.isBlank()) {
@@ -87,11 +87,17 @@ public class ExcelImportService {
         // 解析发布日期为LocalDate
         LocalDate lastAccessDate = parseDateString(publishDate);
 
+        // 构建内推码信息（薪资+备注）
+        String referralCode = null;
+        if (salary != null && !salary.isBlank()) {
+            referralCode = salary.trim();
+        }
+
         return new CreateDirectHireRequest(
             category,
             companyName.trim(),
             applicationLink != null ? applicationLink.trim() : null,
-            referralCode != null ? referralCode.trim() : null,
+            referralCode,
             ApplicationStatus.NOT_APPLIED,  // 默认未投递
             lastAccessDate
         );

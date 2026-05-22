@@ -1,6 +1,7 @@
 import { request } from './request';
 import type {
   DirectHireCompany,
+  PageResponse,
   CompanyCategory,
   CreateDirectHireRequest,
   UpdateDirectHireRequest,
@@ -18,6 +19,21 @@ export const directHireApi = {
       params.append('search', search);
     }
     return request.get<DirectHireCompany[]>(`/api/direct-hire/companies?${params.toString()}`);
+  },
+
+  /**
+   * 分页获取公司列表
+   */
+  async getCompaniesPaged(category: CompanyCategory, search?: string, page = 0, size = 15): Promise<PageResponse<DirectHireCompany>> {
+    const params = new URLSearchParams({
+      category,
+      page: page.toString(),
+      size: size.toString(),
+    });
+    if (search) {
+      params.append('search', search);
+    }
+    return request.get<PageResponse<DirectHireCompany>>(`/api/direct-hire/companies/paged?${params.toString()}`);
   },
 
   /**
@@ -67,6 +83,13 @@ export const directHireApi = {
    */
   async deleteCompany(id: number): Promise<void> {
     return request.delete<void>(`/api/direct-hire/companies/${id}`);
+  },
+
+  /**
+   * 清空指定分类的所有公司
+   */
+  async clearCompanies(category: CompanyCategory): Promise<number> {
+    return request.delete<number>(`/api/direct-hire/companies/clear?category=${category}`);
   },
 
   /**

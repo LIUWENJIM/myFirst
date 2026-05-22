@@ -1,5 +1,6 @@
 package interview.guide.modules.directhire;
 
+import interview.guide.common.result.PageResponse;
 import interview.guide.common.result.Result;
 import interview.guide.modules.directhire.model.*;
 import interview.guide.modules.directhire.service.DirectHireService;
@@ -32,6 +33,20 @@ public class DirectHireController {
         @Parameter(description = "搜索关键词")
         @RequestParam(required = false) String search) {
         return Result.success(directHireService.getCompanies(category, search));
+    }
+
+    @GetMapping("/api/direct-hire/companies/paged")
+    @Operation(summary = "分页获取公司列表", description = "按分类分页获取公司列表，支持搜索")
+    public Result<PageResponse<DirectHireCompanyDTO>> getCompaniesPaged(
+        @Parameter(description = "公司分类", required = true)
+        @RequestParam CompanyCategory category,
+        @Parameter(description = "搜索关键词")
+        @RequestParam(required = false) String search,
+        @Parameter(description = "页码（从0开始）")
+        @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "每页数量")
+        @RequestParam(defaultValue = "15") int size) {
+        return Result.success(directHireService.getCompaniesPaged(category, search, page, size));
     }
 
     @GetMapping("/api/direct-hire/companies/{id}")
@@ -103,5 +118,15 @@ public class DirectHireController {
     public Result<Void> deleteCompany(@PathVariable Long id) {
         directHireService.deleteCompany(id);
         return Result.success();
+    }
+
+    @DeleteMapping("/api/direct-hire/companies/clear")
+    @Operation(summary = "清空分类数据", description = "清空指定分类的所有公司数据")
+    public Result<Integer> clearCompanies(
+        @Parameter(description = "公司分类", required = true)
+        @RequestParam CompanyCategory category) {
+        int deleted = directHireService.clearCompanies(category);
+        log.info("清空分类 {} 的公司数据，共删除 {} 条", category, deleted);
+        return Result.success(deleted);
     }
 }

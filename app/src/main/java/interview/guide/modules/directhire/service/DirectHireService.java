@@ -1,8 +1,10 @@
 package interview.guide.modules.directhire.service;
 
+import interview.guide.common.result.PageResponse;
 import interview.guide.modules.directhire.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +24,17 @@ public class DirectHireService {
         return entities.stream()
             .map(this::toDTO)
             .toList();
+    }
+
+    /**
+     * 按分类分页获取公司列表
+     */
+    public PageResponse<DirectHireCompanyDTO> getCompaniesPaged(CompanyCategory category, String search, int page, int size) {
+        Page<DirectHireCompanyEntity> pageResult = persistenceService.searchByCategoryPaged(category, search, page, size);
+        List<DirectHireCompanyDTO> content = pageResult.getContent().stream()
+            .map(this::toDTO)
+            .toList();
+        return PageResponse.of(content, page, size, pageResult.getTotalElements());
     }
 
     /**
@@ -78,6 +91,13 @@ public class DirectHireService {
      */
     public void deleteCompany(Long id) {
         persistenceService.delete(id);
+    }
+
+    /**
+     * 清空指定分类的所有公司
+     */
+    public int clearCompanies(CompanyCategory category) {
+        return persistenceService.deleteByCategory(category);
     }
 
     /**

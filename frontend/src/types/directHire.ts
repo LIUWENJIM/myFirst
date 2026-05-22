@@ -22,6 +22,14 @@ export interface DirectHireCompany {
   updatedAt: string;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface CreateDirectHireRequest {
   category: CompanyCategory;
   companyName: string;
@@ -70,4 +78,12 @@ export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   ASSESSED: '#22c55e',
   REJECTED: '#ef4444',
   NO_POSITION: '#f97316',
+};
+
+export const STATUS_BG_COLORS: Record<ApplicationStatus, string> = {
+  NOT_APPLIED: '#f3f4f6',
+  SCREENING: '#dbeafe',
+  ASSESSED: '#dcfce7',
+  REJECTED: '#fee2e2',
+  NO_POSITION: '#ffedd5',
 };

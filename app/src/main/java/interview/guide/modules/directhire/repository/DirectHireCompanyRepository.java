@@ -3,7 +3,10 @@ package interview.guide.modules.directhire.repository;
 import interview.guide.modules.directhire.model.ApplicationStatus;
 import interview.guide.modules.directhire.model.CompanyCategory;
 import interview.guide.modules.directhire.model.DirectHireCompanyEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,10 +23,21 @@ public interface DirectHireCompanyRepository extends JpaRepository<DirectHireCom
     List<DirectHireCompanyEntity> findByCategoryOrderBySortOrderAsc(CompanyCategory category);
 
     /**
+     * 按分类分页查询公司（按排序顺序）
+     */
+    Page<DirectHireCompanyEntity> findByCategoryOrderBySortOrderAsc(CompanyCategory category, Pageable pageable);
+
+    /**
      * 按分类和公司名称模糊搜索
      */
     List<DirectHireCompanyEntity> findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(
         CompanyCategory category, String companyName);
+
+    /**
+     * 按分类和公司名称模糊搜索（分页）
+     */
+    Page<DirectHireCompanyEntity> findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(
+        CompanyCategory category, String companyName, Pageable pageable);
 
     /**
      * 按公司名称模糊搜索（所有分类）
@@ -54,4 +68,11 @@ public interface DirectHireCompanyRepository extends JpaRepository<DirectHireCom
      */
     @Query("SELECT COALESCE(MAX(d.sortOrder), 0) FROM DirectHireCompanyEntity d WHERE d.category = :category")
     Integer findMaxSortOrderByCategory(@Param("category") CompanyCategory category);
+
+    /**
+     * 删除指定分类的所有公司
+     */
+    @Modifying
+    @Query("DELETE FROM DirectHireCompanyEntity d WHERE d.category = :category")
+    int deleteByCategory(@Param("category") CompanyCategory category);
 }

@@ -6,6 +6,9 @@ import interview.guide.modules.directhire.model.*;
 import interview.guide.modules.directhire.repository.DirectHireCompanyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,14 @@ public class DirectHirePersistenceService {
     }
 
     /**
+     * 按分类分页查询公司
+     */
+    public Page<DirectHireCompanyEntity> findByCategoryPaged(CompanyCategory category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return repository.findByCategoryOrderBySortOrderAsc(category, pageable);
+    }
+
+    /**
      * 按分类搜索公司
      */
     public List<DirectHireCompanyEntity> searchByCategory(CompanyCategory category, String keyword) {
@@ -33,6 +44,17 @@ public class DirectHirePersistenceService {
             return findByCategory(category);
         }
         return repository.findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(category, keyword);
+    }
+
+    /**
+     * 按分类搜索公司（分页）
+     */
+    public Page<DirectHireCompanyEntity> searchByCategoryPaged(CompanyCategory category, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        if (keyword == null || keyword.isBlank()) {
+            return repository.findByCategoryOrderBySortOrderAsc(category, pageable);
+        }
+        return repository.findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(category, keyword, pageable);
     }
 
     /**
@@ -158,5 +180,13 @@ public class DirectHirePersistenceService {
             throw new BusinessException(ErrorCode.DIRECT_HIRE_COMPANY_NOT_FOUND, "公司不存在: " + id);
         }
         repository.deleteById(id);
+    }
+
+    /**
+     * 清空指定分类的所有公司
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int deleteByCategory(CompanyCategory category) {
+        return repository.deleteByCategory(category);
     }
 }
