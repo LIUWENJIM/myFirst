@@ -16,6 +16,7 @@ const navItems: NavItem[] = [
   {id: 'interview-hub', path: '/interview-hub', label: '模拟面试'},
   {id: 'interviews', path: '/interviews', label: '面试记录'},
   {id: 'interview-schedule', path: '/interview-schedule', label: '面试日程'},
+  {id: 'direct-hire', path: '/direct-hire', label: '直达招聘'},
   {id: 'kb-manage', path: '/knowledgebase', label: '知识库'},
   {id: 'chat', path: '/knowledgebase/chat', label: '问答助手'},
 ];

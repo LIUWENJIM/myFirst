@@ -79,7 +79,11 @@ public enum ErrorCode {
     MODULE_NOT_FOUND(11008, "模块不存在"),
     VOICE_CONFIG_READ_FAILED(11009, "读取语音服务配置失败"),
     VOICE_CONFIG_WRITE_FAILED(11010, "写入语音服务配置失败"),
-    VOICE_CONFIG_TEST_FAILED(11011, "语音服务连通性测试失败");
+    VOICE_CONFIG_TEST_FAILED(11011, "语音服务连通性测试失败"),
+
+    // ========== 直达招聘模块错误 12xxx ==========
+    DIRECT_HIRE_COMPANY_NOT_FOUND(12001, "公司不存在"),
+    DIRECT_HIRE_COMPANY_ALREADY_EXISTS(12002, "公司名称已存在");
 
     private final Integer code;
     private final String message;

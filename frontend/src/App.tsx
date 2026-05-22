@@ -23,6 +23,7 @@ const InterviewSchedulePage = lazy(() => import('./pages/InterviewSchedulePage')
 const InterviewHubPage = lazy(() => import('./pages/InterviewHubPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const InterviewDetailPanel = lazy(() => import('./components/InterviewDetailPanel'));
+const DirectHirePage = lazy(() => import('./pages/DirectHirePage'));
 
 // Loading component
 const Loading = () => (
@@ -210,6 +211,9 @@ function App() {
 
             {/* 面试日程管理 */}
             <Route path="interview-schedule" element={<InterviewSchedulePage />} />
+
+            {/* 直达招聘 */}
+            <Route path="direct-hire" element={<DirectHirePage />} />
 
             {/* 设置 */}
             <Route path="settings" element={<SettingsPage />} />
