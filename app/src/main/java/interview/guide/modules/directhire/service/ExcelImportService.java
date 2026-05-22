@@ -60,51 +60,96 @@ public class ExcelImportService {
 
     /**
      * 解析单行数据
+     * Excel列顺序: A=招聘岗位, B=内推码, C=工作地点, D=投递链接, E=发布日期, F=公司名称, G=招聘类型, H=招聘方向, I=备注
      */
     private CreateDirectHireRequest parseRow(Row row, CompanyCategory category) {
-        // 读取各列数据
-        Integer sortOrder = getIntegerValue(row, 0);  // A列：序号
-        String companyName = getStringValue(row, 1);   // B列：公司名称
-        String applicationLink = getStringValue(row, 2); // C列：投递链接
-        String referralCode = getStringValue(row, 3);   // D列：内推码
-        String statusStr = getStringValue(row, 4);       // E列：投递状态
-        LocalDate lastAccessDate = getDateValue(row, 5); // F列：上次访问时间
+        // 读取各列数据（按实际Excel列顺序）
+        String jobPosition = getStringValue(row, 0);    // A列：招聘岗位
+        String referralCode = getStringValue(row, 1);   // B列：内推码
+        String workLocation = getStringValue(row, 2);   // C列：工作地点
+        String applicationLink = getStringValue(row, 3); // D列：投递链接
+        String publishDate = getStringValue(row, 4);     // E列：发布日期
+        String companyName = getStringValue(row, 5);     // F列：公司名称
+        String recruitType = getStringValue(row, 6);     // G列：招聘类型
+        String recruitDirection = getStringValue(row, 7); // H列：招聘方向
+        String remark = getStringValue(row, 8);           // I列：备注
 
         // 如果公司名称为空，跳过
         if (companyName == null || companyName.isBlank()) {
             return null;
         }
 
-        // 解析状态
-        ApplicationStatus status = parseStatus(statusStr);
+        // 清理投递链接中的markdown格式
+        if (applicationLink != null) {
+            applicationLink = cleanMarkdownLink(applicationLink);
+        }
+
+        // 解析发布日期为LocalDate
+        LocalDate lastAccessDate = parseDateString(publishDate);
 
         return new CreateDirectHireRequest(
             category,
             companyName.trim(),
             applicationLink != null ? applicationLink.trim() : null,
             referralCode != null ? referralCode.trim() : null,
-            status,
+            ApplicationStatus.NOT_APPLIED,  // 默认未投递
             lastAccessDate
         );
     }
 
     /**
-     * 解析状态字符串
+     * 清理markdown格式的链接
+     * 例如: [https://example.com](https://example.com) -> https://example.com
      */
-    private ApplicationStatus parseStatus(String statusStr) {
-        if (statusStr == null || statusStr.isBlank()) {
-            return ApplicationStatus.NOT_APPLIED;
+    private String cleanMarkdownLink(String link) {
+        if (link == null) return null;
+
+        // 处理markdown链接格式 [text](url)
+        if (link.startsWith("[") && link.contains("](")) {
+            int start = link.indexOf("](");
+            int end = link.indexOf(")", start);
+            if (start > 0 && end > start) {
+                return link.substring(start + 2, end);
+            }
         }
 
-        String trimmed = statusStr.trim();
-        return switch (trimmed) {
-            case "未投递" -> ApplicationStatus.NOT_APPLIED;
-            case "筛选中" -> ApplicationStatus.SCREENING;
-            case "已测评" -> ApplicationStatus.ASSESSED;
-            case "已拒绝" -> ApplicationStatus.REJECTED;
-            case "无对应岗位" -> ApplicationStatus.NO_POSITION;
-            default -> ApplicationStatus.NOT_APPLIED;
-        };
+        return link;
+    }
+
+    /**
+     * 解析日期字符串
+     * 支持格式: "2026 年 5 月 21 日" 或 "2026-05-21"
+     */
+    private LocalDate parseDateString(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) {
+            return null;
+        }
+
+        try {
+            // 处理中文日期格式: "2026 年 5 月 21 日"
+            if (dateStr.contains("年") && dateStr.contains("月")) {
+                String cleaned = dateStr.replace(" ", "");
+                int year = Integer.parseInt(cleaned.substring(0, cleaned.indexOf("年")));
+                int month = Integer.parseInt(cleaned.substring(cleaned.indexOf("年") + 1, cleaned.indexOf("月")));
+                int day = 1;
+                int dayIndex = cleaned.indexOf("月") + 1;
+                int dayEnd = cleaned.indexOf("日");
+                if (dayEnd > dayIndex) {
+                    day = Integer.parseInt(cleaned.substring(dayIndex, dayEnd));
+                }
+                return LocalDate.of(year, month, day);
+            }
+
+            // 处理标准日期格式: "2026-05-21"
+            if (dateStr.contains("-")) {
+                return LocalDate.parse(dateStr.trim());
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.warn("解析日期失败: {}", dateStr, e);
+            return null;
+        }
     }
 
     /**
