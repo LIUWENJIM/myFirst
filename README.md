@@ -174,58 +174,29 @@
 
 ## 效果展示
 
-### 简历与面试
+直达招聘：
+
+![直达招聘](docs/screenshots/direct-hire.png)
 
 面试中心：
 
-![面试中心](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-hub.png)
-
-Skill 出题 + JD 解析：
-
-![Skill 出题 + JD 解析](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-skill-jd-parse.png)
+![面试中心](docs/screenshots/interview-hub.png)
 
 简历库：
 
-![简历库](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-history.png)
+![简历库](docs/screenshots/resume-history.png)
 
-简历上传分析：
+面试安排：
 
-![简历上传分析](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-upload-analysis.png)
-
-简历分析详情：
-
-![简历分析详情](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-resume-analysis-detail.png)
-
-面试记录：
-
-![面试记录](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-history.png)
-
-面试详情：
-
-![面试详情](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-detail.png)
-
-模拟面试：
-
-![模拟面试](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-mock-interview.png)
-
-面试安排
-
-![面试安排](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-interview-schedule-list.png)
-
-多模型切换 + 语音服务设置：
-
-![管理聊天模型、向量模型和模块配置](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/llm-settings.png)
-
-
-### 知识库
+![面试安排](docs/screenshots/interview-schedule.png)
 
 知识库管理：
 
-![知识库管理](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-knowledge-base-management.png)
+![知识库管理](docs/screenshots/knowledge-base.png)
 
-问答助手：
+多模型切换 + 语音服务设置：
 
-![问答助手](https://oss.javaguide.cn/xingqiu/pratical-project/interview-guide/page-qa-assistant.png)
+![设置页](docs/screenshots/settings.png)
 
 ## 项目结构
 
