@@ -8,6 +8,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * 语音面试消息实体
+ *
+ * 对应数据库表 voice_interview_messages，存储语音面试中的每轮对话。
+ * 每条消息包含用户的语音识别文本和 AI 生成的回复文本。
+ *
+ * 消息类型（messageType）：
+ * - DIALOGUE: 普通对话（一问一答）
+ * - SYSTEM: 系统消息（阶段切换通知等）
+ */
 @Entity
 @Table(name = "voice_interview_messages")
 @Data

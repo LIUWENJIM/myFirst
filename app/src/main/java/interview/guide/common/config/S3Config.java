@@ -11,7 +11,15 @@ import software.amazon.awssdk.services.s3.S3Client;
 import java.net.URI;
 
 /**
- * S3客户端配置（用于RustFS）
+ * S3 客户端配置（用于 RustFS/MinIO 对象存储）
+ *
+ * 创建 AWS S3 SDK 客户端，连接本地 RustFS 或 MinIO 服务。
+ * 使用路径风格访问（path-style），而非虚拟主机风格（virtual-hosted-style），
+ * 因为本地 MinIO 不支持虚拟主机风格的 DNS 解析。
+ *
+ * 配置来源：StorageConfigProperties（app.storage.*）
+ *
+ * @see StorageConfigProperties
  */
 @Configuration
 @RequiredArgsConstructor

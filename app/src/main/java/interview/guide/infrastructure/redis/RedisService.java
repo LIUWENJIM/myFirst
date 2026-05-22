@@ -28,7 +28,18 @@ import java.util.function.Function;
 
 /**
  * Redis 服务封装
- * 提供通用的 Redis 操作，包括缓存、分布式锁、Stream 消息队列等
+ *
+ * 提供通用的 Redis 操作抽象，基于 Redisson 实现。
+ * 被整个项目广泛使用，包括缓存、分布式锁、Stream 消息队列等。
+ *
+ * 功能分组：
+ * 1. 基础键值操作：set/get/delete/exists
+ * 2. 原子操作：increment/decrement
+ * 3. 分布式锁：tryLock/unlock
+ * 4. Stream 消息队列：streamAdd/streamConsumeMessages/streamAck
+ * 5. 列表操作：listPush/listRange
+ * 6. Map 操作：mapPut/mapGet
+ * 7. Key 管理：deleteByPattern/scanKeys
  */
 @Slf4j
 @Service

@@ -9,13 +9,17 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Voice Interview Evaluation Entity
  * 语音面试评估实体
- * <p>
- * Stores evaluation results in a format aligned with text-based interviews:
- * per-question evaluations, overall feedback, strengths, improvements, and reference answers.
- * All structured data (arrays/objects) is stored as JSON TEXT columns.
- * </p>
+ *
+ * 对应数据库表 voice_interview_evaluations，存储语音面试的评估结果。
+ * 与文字面试评估格式对齐：逐题评估、总体反馈、优势、改进、参考答案。
+ * 所有结构化数据（数组/对象）以 JSON TEXT 列存储。
+ *
+ * JSON 字段说明：
+ * - questionEvaluationsJson: List<QuestionEvaluation> 的 JSON
+ * - strengthsJson: List<String> 的 JSON
+ * - improvementsJson: List<String> 的 JSON
+ * - referenceAnswersJson: List<ReferenceAnswer> 的 JSON
  */
 @Entity
 @Table(name = "voice_interview_evaluations")

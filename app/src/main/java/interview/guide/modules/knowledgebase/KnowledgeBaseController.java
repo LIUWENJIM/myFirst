@@ -50,6 +50,7 @@ public class KnowledgeBaseController {
 
     /**
      * 获取所有知识库列表
+     *
      */
     @GetMapping("/api/knowledgebase/list")
     public Result<List<KnowledgeBaseListItemDTO>> getAllKnowledgeBases(

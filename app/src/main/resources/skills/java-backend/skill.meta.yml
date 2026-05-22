@@ -17,7 +17,7 @@ categories:
     shared: true
   - key: REDIS
     label: Redis
-    priority: CORE
+    priority: NORMAL
     ref: redis.md
     shared: true
   - key: SPRING
@@ -25,6 +25,22 @@ categories:
     priority: NORMAL
     ref: spring.md
     shared: true
+  - key: MQ
+    label: 消息队列
+    priority: NORMAL
+    ref: mq.md
+    shared: true
+  - key: DISTRIBUTED
+    label: 分布式
+    priority: NORMAL
+    ref: distributed.md
+    shared: true
+  - key: CACHE_DESIGN
+    label: 缓存设计
+    priority: NORMAL
+  - key: AI_INTEGRATION
+    label: AI/LLM集成
+    priority: CORE
   - key: SYSTEM_DESIGN_SCENARIO
     label: 系统设计/场景题
     priority: NORMAL

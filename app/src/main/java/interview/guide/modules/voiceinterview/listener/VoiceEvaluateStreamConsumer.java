@@ -14,6 +14,15 @@ import java.util.Map;
 
 /**
  * 语音面试评估 Stream 消费者
+ *
+ * 从 Redis Stream 消费语音面试评估任务，调用 VoiceInterviewEvaluationService 生成评估报告。
+ *
+ * 消费流程：
+ * 1. 解析消息（会话ID）
+ * 2. 标记评估状态为 PROCESSING
+ * 3. 调用评估服务生成评估报告
+ * 4. 标记评估状态为 COMPLETED 或 FAILED
+ * 5. 失败时重试（最多 3 次）
  */
 @Slf4j
 @Component

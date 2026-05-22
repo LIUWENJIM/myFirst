@@ -49,21 +49,46 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * LLM 提供者配置管理服务
+ *
+ * 管理 LLM 提供者的 CRUD 操作、连通性测试、默认提供者设置等。
+ * 是 LlmProviderController 的业务层，也是管理界面的核心服务。
+ *
+ * 核心职责：
+ * 1. 提供者 CRUD：创建、更新、删除、查询 LLM 提供者配置
+ * 2. API Key 加密：通过 ApiKeyEncryptionService 加密存储 API Key
+ * 3. 连通性测试：测试提供者是否可用（发送简单请求验证）
+ * 4. 默认提供者管理：设置默认 Chat/Embedding 提供者
+ * 5. 配置持久化：同时更新数据库和 YAML/ENV 配置文件
+ * 6. 注册中心同步：修改配置后通知 LlmProviderRegistry 清空缓存
+ * 7. 语音服务配置：管理 ASR/TTS 服务的配置
+ *
+ * 配置持久化策略：
+ * - 数据库（llm_provider_config 表）：运行时配置，优先级最高
+ * - YAML 文件（~/.interview-guide/providers.yml）：启动时回退配置
+ * - ENV 文件（~/.interview-guide/providers.env）：环境变量格式
+ *
+ * 并发控制：
+ * - 使用 ReentrantReadWriteLock 保护配置读写操作
+ * - 读操作（查询、测试）使用读锁
+ * - 写操作（创建、更新、删除）使用写锁
+ */
 @Service
 @Slf4j
 public class LlmProviderConfigService {
 
-  private final LlmProviderProperties properties;
-  private final LlmProviderRegistry registry;
-  private final LlmProviderRepository providerRepository;
-  private final LlmGlobalSettingRepository globalSettingRepository;
-  private final ApiKeyEncryptionService encryptionService;
-  private final String yamlPath;
-  private final String envPath;
-  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-  private final VoiceInterviewProperties voiceProperties;
-  private final QwenAsrService asrService;
-  private final QwenTtsService ttsService;
+  private final LlmProviderProperties properties;                    // LLM 配置属性
+  private final LlmProviderRegistry registry;                        // LLM 提供者注册中心
+  private final LlmProviderRepository providerRepository;            // 提供者数据库仓库
+  private final LlmGlobalSettingRepository globalSettingRepository;  // 全局设置仓库
+  private final ApiKeyEncryptionService encryptionService;           // API Key 加密服务
+  private final String yamlPath;                                     // YAML 配置文件路径
+  private final String envPath;                                      // ENV 配置文件路径
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();  // 读写锁
+  private final VoiceInterviewProperties voiceProperties;            // 语音面试配置
+  private final QwenAsrService asrService;                           // ASR 服务（连通性测试）
+  private final QwenTtsService ttsService;                           // TTS 服务（连通性测试）
 
   private static final Map<String, String> RECOMMENDED_EMBEDDING_MODELS = Map.of(
       "dashscope", "text-embedding-v3",

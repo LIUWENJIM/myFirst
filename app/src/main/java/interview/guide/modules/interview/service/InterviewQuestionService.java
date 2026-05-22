@@ -39,16 +39,29 @@ import java.util.stream.Collectors;
  * 面试问题生成服务
  * 无简历：单次 Skill 驱动出题
  * 有简历：并行调用（简历题 60% + 方向题 40%）
+ *
+ * 核心功能：
+ * 1. 根据 Skill 配置生成面试问题
+ * 2. 支持有简历和无简历两种模式
+ * 3. 有简历时并行生成简历题和方向题
+ * 4. 支持追问（follow-up）机制
+ * 5. 避免与历史问题重复
+ *
+ * 出题策略：
+ * - 无简历：单次调用，生成方向相关问题
+ * - 有简历：并行调用，简历题 60% + 方向题 40%
+ * - 追问：每个主问题最多 2 个追问
  */
 @Service
 public class InterviewQuestionService {
 
     private static final Logger log = LoggerFactory.getLogger(InterviewQuestionService.class);
 
-    private static final String DEFAULT_QUESTION_TYPE = "GENERAL";
-    private static final int MAX_FOLLOW_UP_COUNT = 2;
-    private static final double RESUME_QUESTION_RATIO = 0.6;
+    private static final String DEFAULT_QUESTION_TYPE = "GENERAL";  // 默认问题类型
+    private static final int MAX_FOLLOW_UP_COUNT = 2;               // 最大追问数量
+    private static final double RESUME_QUESTION_RATIO = 0.6;        // 简历题占比（60%）
 
+    // 通用面试模式的系统提示词补充（无简历时使用）
     private static final String GENERIC_MODE_SYSTEM_APPEND = """
         \n\n# 通用面试模式
         本次面试无候选人简历，请出该方向的标准面试题。
@@ -56,12 +69,14 @@ public class InterviewQuestionService {
         - 问题表述应与简历无关，直接考察该方向的技术能力
         """;
 
+    // 难度描述映射
     private static final Map<String, String> DIFFICULTY_DESCRIPTIONS = Map.of(
         "junior", "校招/0-1年经验。考察基础概念和简单应用。",
         "mid", "1-3年经验。考察原理理解和实战经验。",
         "senior", "3年+经验。考察架构设计和深度调优。"
     );
 
+    // 通用兜底问题（当 AI 生成失败时使用）
     private static final String[][] GENERIC_FALLBACK_QUESTIONS = {
         {"请描述一个你主导解决的技术难题，你的分析思路是什么？", "GENERAL", "综合能力"},
         {"你在做技术方案选型时，通常考虑哪些因素？请举例说明。", "GENERAL", "综合能力"},
@@ -71,23 +86,39 @@ public class InterviewQuestionService {
         {"你在团队协作中遇到过最大的分歧是什么？如何解决的？", "GENERAL", "综合能力"},
     };
 
-    private final PromptTemplate skillSystemPromptTemplate;
-    private final PromptTemplate skillUserPromptTemplate;
-    private final PromptTemplate resumeSystemPromptTemplate;
-    private final PromptTemplate resumeUserPromptTemplate;
-    private final BeanOutputConverter<QuestionListDTO> outputConverter;
-    private final StructuredOutputInvoker structuredOutputInvoker;
-    private final InterviewSkillService skillService;
-    private final LlmProviderRegistry llmProviderRegistry;
-    private final PromptSanitizer promptSanitizer;
-    private final ExecutorService questionExecutor;
-    private final int followUpCount;
+    // ==================== 提示词模板和转换器 ====================
+    private final PromptTemplate skillSystemPromptTemplate;      // Skill 出题系统提示词
+    private final PromptTemplate skillUserPromptTemplate;        // Skill 出题用户提示词
+    private final PromptTemplate resumeSystemPromptTemplate;     // 简历出题系统提示词
+    private final PromptTemplate resumeUserPromptTemplate;       // 简历出题用户提示词
+    private final BeanOutputConverter<QuestionListDTO> outputConverter;  // 结构化输出转换器
 
+    // ==================== 服务依赖 ====================
+    private final StructuredOutputInvoker structuredOutputInvoker;  // 结构化输出调用器
+    private final InterviewSkillService skillService;               // Skill 管理服务
+    private final LlmProviderRegistry llmProviderRegistry;          // LLM 提供商注册中心
+    private final PromptSanitizer promptSanitizer;                  // Prompt 安全净化器
+    private final ExecutorService questionExecutor;                 // 并行出题线程池
+    private final int followUpCount;                                // 追问数量配置
+
+    // 中间 DTO：AI 返回的问题列表
     private record QuestionListDTO(List<QuestionDTO> questions) {}
 
+    // 中间 DTO：单个问题
     private record QuestionDTO(String question, String type, String category,
                                String topicSummary, List<String> followUps) {}
 
+    /**
+     * 构造函数，初始化提示词模板和线程池
+     *
+     * @param structuredOutputInvoker 结构化输出调用器
+     * @param skillService            Skill 管理服务
+     * @param properties              问题生成配置属性
+     * @param resourceLoader          资源加载器
+     * @param llmProviderRegistry     LLM 提供商注册中心
+     * @param promptSanitizer         Prompt 安全净化器
+     * @throws IOException 如果提示词文件加载失败
+     */
     public InterviewQuestionService(
             StructuredOutputInvoker structuredOutputInvoker,
             InterviewSkillService skillService,
@@ -99,12 +130,20 @@ public class InterviewQuestionService {
         this.skillService = skillService;
         this.llmProviderRegistry = llmProviderRegistry;
         this.promptSanitizer = promptSanitizer;
+
+        // 使用虚拟线程池（Java 21 特性，轻量级线程）
         this.questionExecutor = Executors.newVirtualThreadPerTaskExecutor();
+
+        // 加载提示词模板
         this.skillSystemPromptTemplate = loadTemplate(resourceLoader, properties.getQuestionSystemPromptPath());
         this.skillUserPromptTemplate = loadTemplate(resourceLoader, properties.getQuestionUserPromptPath());
         this.resumeSystemPromptTemplate = loadTemplate(resourceLoader, properties.getResumeQuestionSystemPromptPath());
         this.resumeUserPromptTemplate = loadTemplate(resourceLoader, properties.getResumeQuestionUserPromptPath());
+
+        // 初始化结构化输出转换器
         this.outputConverter = new BeanOutputConverter<>(QuestionListDTO.class);
+
+        // 配置追问数量（0-2 之间）
         this.followUpCount = Math.max(0, Math.min(properties.getFollowUpCount(), MAX_FOLLOW_UP_COUNT));
     }
 
@@ -117,6 +156,23 @@ public class InterviewQuestionService {
         questionExecutor.shutdownNow();
     }
 
+    /**
+     * 根据 Skill 生成面试问题
+     *
+     * 出题策略：
+     * - 无简历：单次调用，生成方向相关问题
+     * - 有简历：并行调用，简历题 60% + 方向题 40%
+     *
+     * @param llmProvider        LLM 提供商标识
+     * @param skillId            Skill ID（面试方向）
+     * @param difficulty         难度级别（junior/mid/senior）
+     * @param resumeText         简历文本（可选）
+     * @param questionCount      问题数量
+     * @param historicalQuestions 历史问题（避免重复）
+     * @param customCategories   自定义分类（JD 解析时使用）
+     * @param jdText             职位描述文本（可选）
+     * @return 生成的面试问题列表
+     */
     public List<InterviewQuestionDTO> generateQuestionsBySkill(
             String llmProvider,
             String skillId,
@@ -127,24 +183,30 @@ public class InterviewQuestionService {
             List<CategoryDTO> customCategories,
             String jdText) {
 
+        // 解析 Skill 和难度描述
         SkillDTO skill = resolveSkill(skillId, customCategories, jdText);
         String difficultyDesc = resolveDifficulty(difficulty);
         ChatClient questionChatClient =
             llmProviderRegistry.getPlainChatClient(llmProvider);
 
+        // 构建历史问题提示（避免重复出题）
         boolean hasResume = resumeText != null && !resumeText.isBlank();
         String historicalSection = buildHistoricalSection(historicalQuestions);
+
+        // 无简历模式：单次调用生成方向题
         if (!hasResume) {
             return generateDirectionOnly(questionChatClient, skill, difficultyDesc, questionCount,
                 historicalSection);
         }
 
+        // 有简历模式：并行生成简历题和方向题
         int resumeCount = Math.max(1, (int) Math.round(questionCount * RESUME_QUESTION_RATIO));
         int directionCount = questionCount - resumeCount;
 
         log.info("并行出题: skill={}, total={}, resumeCount={}, directionCount={}",
             skillId, questionCount, resumeCount, directionCount);
 
+        // 并行调用：简历题和方向题同时生成
         CompletableFuture<List<InterviewQuestionDTO>> resumeFuture = CompletableFuture.supplyAsync(
             () -> generateResumeQuestions(questionChatClient, resumeText, resumeCount, skill,
                 difficultyDesc, historicalSection),
@@ -155,6 +217,7 @@ public class InterviewQuestionService {
                 historicalSection),
             questionExecutor);
 
+        // 等待简历题生成完成
         List<InterviewQuestionDTO> resumeQuestions;
         List<InterviewQuestionDTO> directionQuestions;
         try {
@@ -166,6 +229,7 @@ public class InterviewQuestionService {
                 historicalSection);
         }
 
+        // 等待方向题生成完成
         try {
             directionQuestions = directionFuture.join();
         } catch (CompletionException e) {
@@ -176,21 +240,37 @@ public class InterviewQuestionService {
             return resumeQuestions;
         }
 
+        // 如果都失败了，使用兜底问题
         if (resumeQuestions.isEmpty() && directionQuestions.isEmpty()) {
             log.warn("简历题和方向题均为空，回退到默认问题");
             return generateFallbackQuestions(skill, questionCount);
         }
 
+        // 合并简历题和方向题
         List<InterviewQuestionDTO> merged = mergeQuestionBatches(resumeQuestions, directionQuestions);
         log.info("并行出题成功: 简历题={}, 方向题={}, 合计={}",
             resumeQuestions.size(), directionQuestions.size(), merged.size());
         return merged;
     }
 
+    /**
+     * 生成简历相关问题
+     *
+     * 根据简历内容生成针对性问题，考察候选人的实际经验
+     *
+     * @param questionClient    LLM 客户端
+     * @param resumeText        简历文本
+     * @param questionCount     问题数量
+     * @param skill             Skill 配置
+     * @param difficultyDesc    难度描述
+     * @param historicalSection 历史问题提示
+     * @return 生成的简历问题列表
+     */
     private List<InterviewQuestionDTO> generateResumeQuestions(
             ChatClient questionClient, String resumeText, int questionCount,
             SkillDTO skill, String difficultyDesc, String historicalSection) {
         try {
+            // 构建提示词变量
             Map<String, Object> variables = new HashMap<>();
             variables.put("questionCount", questionCount);
             variables.put("followUpCount", followUpCount);
@@ -200,16 +280,19 @@ public class InterviewQuestionService {
             variables.put("resumeText", resumeText);
             variables.put("historicalSection", historicalSection);
 
+            // 渲染提示词
             String systemPrompt = resumeSystemPromptTemplate.render()
                 + buildSkillPersonaSection(skill)
                 + "\n\n" + outputConverter.getFormat();
             String userPrompt = resumeUserPromptTemplate.render(variables);
 
+            // 调用 LLM 生成问题
             QuestionListDTO dto = structuredOutputInvoker.invoke(
                 questionClient, systemPrompt, userPrompt, outputConverter,
                 ErrorCode.INTERVIEW_QUESTION_GENERATION_FAILED,
                 "简历题生成失败：", "简历题", log);
 
+            // 转换为 DTO 并截断到指定数量
             List<InterviewQuestionDTO> questions = convertToQuestions(dto);
             questions = capToMainCount(questions, questionCount);
             log.info("简历题生成完成: 请求={}, 实际主问题={}",
@@ -223,9 +306,22 @@ public class InterviewQuestionService {
         }
     }
 
+    /**
+     * 生成方向相关问题
+     *
+     * 根据 Skill 配置生成技术方向问题，考察候选人的技术能力
+     *
+     * @param questionClient    LLM 客户端
+     * @param skill             Skill 配置
+     * @param difficultyDesc    难度描述
+     * @param questionCount     问题数量
+     * @param historicalSection 历史问题提示
+     * @return 生成的方向问题列表
+     */
     private List<InterviewQuestionDTO> generateDirectionOnly(
             ChatClient questionClient, SkillDTO skill, String difficultyDesc,
             int questionCount, String historicalSection) {
+        // 计算各分类的题目分配
         Map<String, Integer> allocation = skillService.calculateAllocation(skill.categories(), questionCount);
         String allocationTable = skillService.buildAllocationDescription(allocation, skill.categories());
 
@@ -233,6 +329,7 @@ public class InterviewQuestionService {
             skill.id(), questionCount, allocation);
 
         try {
+            // 构建提示词变量
             Map<String, Object> variables = new HashMap<>();
             variables.put("questionCount", questionCount);
             variables.put("followUpCount", followUpCount);
@@ -244,22 +341,27 @@ public class InterviewQuestionService {
             variables.put("referenceSection", skillService.buildReferenceSection(skill, allocation));
             variables.put("jdSection", buildJdSection(skill.sourceJd()));
 
+            // 渲染提示词
             String systemPrompt = skillSystemPromptTemplate.render()
                 + buildSkillPersonaSection(skill)
                 + GENERIC_MODE_SYSTEM_APPEND
                 + outputConverter.getFormat();
             String userPrompt = skillUserPromptTemplate.render(variables);
 
+            // 调用 LLM 生成问题
             QuestionListDTO dto = structuredOutputInvoker.invoke(
                 questionClient, systemPrompt, userPrompt, outputConverter,
                 ErrorCode.INTERVIEW_QUESTION_GENERATION_FAILED,
                 "方向题生成失败：", "方向题", log);
 
+            // 转换为 DTO 并检查是否为空
             List<InterviewQuestionDTO> questions = convertToQuestions(dto);
             if (questions.stream().filter(q -> !q.isFollowUp()).count() == 0) {
                 log.warn("方向题返回空题单，回退到默认问题");
                 return generateFallbackQuestions(skill, questionCount);
             }
+
+            // 截断到指定数量
             questions = capToMainCount(questions, questionCount);
             log.info("方向题生成完成: 请求={}, 实际主问题={}",
                 questionCount, questions.stream().filter(q -> !q.isFollowUp()).count());

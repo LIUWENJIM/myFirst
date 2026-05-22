@@ -22,32 +22,54 @@ import java.util.Optional;
  * 简历上传服务
  * 处理简历上传、解析的业务逻辑
  * AI 分析改为异步处理，通过 Redis Stream 实现
+ *
+ * 主要流程：
+ * 1. 验证文件（大小、类型）
+ * 2. 检查是否重复上传（基于文件哈希去重）
+ * 3. 解析简历文本内容
+ * 4. 上传文件到 RustFS 对象存储
+ * 5. 保存简历记录到数据库（状态为 PENDING）
+ * 6. 发送分析任务到 Redis Stream（异步处理）
+ * 7. 返回结果（前端可轮询获取分析状态）
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResumeUploadService {
 
-    private final ResumeParseService parseService;
-    private final FileStorageService storageService;
-    private final ResumePersistenceService persistenceService;
-    private final AppConfigProperties appConfig;
-    private final FileValidationService fileValidationService;
-    private final AnalyzeStreamProducer analyzeStreamProducer;
-    private final ResumeRepository resumeRepository;
+    private final ResumeParseService parseService;           // 简历解析服务，负责提取文本内容
+    private final FileStorageService storageService;         // 文件存储服务，负责上传到 RustFS
+    private final ResumePersistenceService persistenceService; // 持久化服务，负责数据库操作
+    private final AppConfigProperties appConfig;             // 应用配置，包含允许的文件类型
+    private final FileValidationService fileValidationService; // 文件验证服务，检查文件大小和类型
+    private final AnalyzeStreamProducer analyzeStreamProducer; // 异步分析任务生产者，发送到 Redis Stream
+    private final ResumeRepository resumeRepository;         // 简历仓库，用于数据库查询
 
-    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 最大文件大小限制：10MB
 
     /**
      * 上传并分析简历（异步）
      *
-     * @param file 简历文件
-     * @return 上传结果（分析将异步进行）
+     * 业务流程：
+     * 1. 验证文件大小和类型
+     * 2. 检查是否重复上传（基于文件哈希）
+     * 3. 解析简历文本内容
+     * 4. 上传文件到 RustFS 对象存储
+     * 5. 保存简历记录到数据库（状态为 PENDING）
+     * 6. 发送分析任务到 Redis Stream（异步处理）
+     * 7. 返回结果（前端可轮询获取分析状态）
+     *
+     * @param file 简历文件（支持 PDF、DOCX、DOC、TXT、MD 等格式）
+     * @return 上传结果 Map，包含：
+     *         - resume: 简历基本信息（id, filename, analyzeStatus）
+     *         - storage: 存储信息（fileKey, fileUrl, resumeId）
+     *         - duplicate: 是否为重复上传
+     * @throws BusinessException 文件验证失败或解析失败时抛出
      */
     public Map<String, Object> uploadAndAnalyze(org.springframework.web.multipart.MultipartFile file) {
         long startTime = System.currentTimeMillis();
 
-        // 1. 验证文件
+        // 1. 验证文件大小（最大 10MB）
         fileValidationService.validateFile(file, MAX_FILE_SIZE, "简历");
 
         String fileName = file.getOriginalFilename();
@@ -55,11 +77,11 @@ public class ResumeUploadService {
         log.info("收到简历上传请求: {}, 大小: {} bytes ({}), 上传开始处理",
             fileName, fileSize, formatFileSize(fileSize));
 
-        // 2. 验证文件类型
+        // 2. 验证文件类型（检查是否在允许的类型列表中）
         String contentType = parseService.detectContentType(file);
         validateContentType(contentType);
 
-        // 3. 检查简历是否已存在（去重）
+        // 3. 检查简历是否已存在（基于文件哈希去重）
         Optional<ResumeEntity> existingResume = persistenceService.findExistingResume(file);
         if (existingResume.isPresent()) {
             log.info("简历上传处理完成（重复）: {} - 耗时: {}ms",
@@ -67,7 +89,7 @@ public class ResumeUploadService {
             return handleDuplicateResume(existingResume.get());
         }
 
-        // 4. 解析简历文本
+        // 4. 解析简历文本内容（使用 Apache Tika 提取文本）
         long parseStart = System.currentTimeMillis();
         String resumeText = parseService.parseResume(file);
         if (resumeText == null || resumeText.trim().isEmpty()) {
@@ -76,17 +98,17 @@ public class ResumeUploadService {
         log.info("简历文本解析完成: {} - 解析耗时: {}ms, 文本长度: {} 字符",
             fileName, System.currentTimeMillis() - parseStart, resumeText.length());
 
-        // 5. 保存简历到RustFS
+        // 5. 保存简历到 RustFS 对象存储
         long storageStart = System.currentTimeMillis();
         String fileKey = storageService.uploadResume(file);
         String fileUrl = storageService.getFileUrl(fileKey);
         log.info("简历已存储到RustFS: {} - 存储耗时: {}ms",
             fileKey, System.currentTimeMillis() - storageStart);
 
-        // 6. 保存简历到数据库（状态为 PENDING）
+        // 6. 保存简历记录到数据库（状态为 PENDING，等待异步分析）
         ResumeEntity savedResume = persistenceService.saveResume(file, resumeText, fileKey, fileUrl);
 
-        // 7. 发送分析任务到 Redis Stream（异步处理）
+        // 7. 发送分析任务到 Redis Stream（异步处理，不阻塞上传流程）
         analyzeStreamProducer.sendAnalyzeTask(savedResume.getId(), resumeText);
 
         long totalTime = System.currentTimeMillis() - startTime;
@@ -111,6 +133,9 @@ public class ResumeUploadService {
 
     /**
      * 格式化文件大小为可读字符串
+     *
+     * @param bytes 文件大小（字节）
+     * @return 格式化后的字符串，如 "1.5MB"、"500.0KB"、"100B"
      */
     private String formatFileSize(long bytes) {
         if (bytes < 1024) return bytes + "B";
@@ -119,7 +144,10 @@ public class ResumeUploadService {
     }
 
     /**
-     * 验证文件类型
+     * 验证文件类型是否在允许列表中
+     *
+     * @param contentType 检测到的 MIME 类型
+     * @throws BusinessException 如果文件类型不支持
      */
     private void validateContentType(String contentType) {
         fileValidationService.validateContentTypeByList(
@@ -130,7 +158,13 @@ public class ResumeUploadService {
     }
 
     /**
-     * 处理重复简历
+     * 处理重复简历的情况
+     *
+     * 当检测到重复上传时，返回历史分析结果（如果有）
+     * 如果没有分析结果（可能之前分析失败），返回当前状态
+     *
+     * @param resume 已存在的简历实体
+     * @return 包含历史分析结果或当前状态的 Map
      */
     private Map<String, Object> handleDuplicateResume(ResumeEntity resume) {
         log.info("检测到重复简历，返回历史分析结果: resumeId={}", resume.getId());
@@ -138,7 +172,7 @@ public class ResumeUploadService {
         // 获取历史分析结果
         Optional<ResumeAnalysisResponse> analysisOpt = persistenceService.getLatestAnalysisAsDTO(resume.getId());
 
-        // 已有分析结果，直接返回
+        // 已有分析结果，直接返回分析结果和存储信息
         // 没有分析结果（可能之前分析失败），返回当前状态
         return analysisOpt.map(resumeAnalysisResponse -> Map.of(
                 "analysis", resumeAnalysisResponse,
@@ -165,9 +199,12 @@ public class ResumeUploadService {
 
     /**
      * 重新分析简历（手动重试）
-     * 从数据库获取简历文本并发送分析任务
+     *
+     * 从数据库获取简历文本并发送分析任务到 Redis Stream
+     * 如果数据库中没有缓存的文本，会尝试重新从存储下载并解析
      *
      * @param resumeId 简历ID
+     * @throws BusinessException 如果简历不存在或无法获取文本内容
      */
     @Transactional
     public void reanalyze(Long resumeId) {
@@ -176,9 +213,10 @@ public class ResumeUploadService {
 
         log.info("开始重新分析简历: resumeId={}, filename={}", resumeId, resume.getOriginalFilename());
 
+        // 获取简历文本（优先使用缓存的文本，如果没有则重新解析）
         String resumeText = resume.getResumeText();
         if (resumeText == null || resumeText.trim().isEmpty()) {
-            // 如果没有缓存的文本，尝试重新解析
+            // 如果没有缓存的文本，尝试从存储下载并重新解析
             resumeText = parseService.downloadAndParseContent(resume.getStorageKey(), resume.getOriginalFilename());
             if (resumeText == null || resumeText.trim().isEmpty()) {
                 throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED, "无法获取简历文本内容");
@@ -187,12 +225,12 @@ public class ResumeUploadService {
             resume.setResumeText(resumeText);
         }
 
-        // 更新状态为 PENDING
+        // 更新状态为 PENDING，清除之前的错误信息
         resume.setAnalyzeStatus(AsyncTaskStatus.PENDING);
         resume.setAnalyzeError(null);
         resumeRepository.save(resume);
 
-        // 发送分析任务到 Stream
+        // 发送分析任务到 Redis Stream
         analyzeStreamProducer.sendAnalyzeTask(resumeId, resumeText);
 
         log.info("重新分析任务已发送: resumeId={}", resumeId);

@@ -26,27 +26,42 @@ import java.util.Optional;
 /**
  * 简历历史服务
  * 简历历史和导出简历分析报告
+ *
+ * 主要功能：
+ * 1. 获取所有简历列表（包含最新分数和面试次数）
+ * 2. 获取简历详情（包含分析历史和面试历史）
+ * 3. 导出简历分析报告为 PDF
+ * 4. 从 JSON 提取优点和建议（用于历史记录展示）
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResumeHistoryService {
 
-    private final ResumePersistenceService resumePersistenceService;
-    private final InterviewPersistenceService interviewPersistenceService;
-    private final PdfExportService pdfExportService;
-    private final ObjectMapper objectMapper;
-    private final ResumeMapper resumeMapper;
-    private final InterviewMapper interviewMapper;
+    private final ResumePersistenceService resumePersistenceService; // 简历持久化服务，负责数据库查询
+    private final InterviewPersistenceService interviewPersistenceService; // 面试持久化服务，获取面试次数
+    private final PdfExportService pdfExportService;               // PDF 导出服务，生成分析报告
+    private final ObjectMapper objectMapper;                       // JSON 序列化工具，解析优点和建议
+    private final ResumeMapper resumeMapper;                       // MapStruct 映射器，转换实体和 DTO
+    private final InterviewMapper interviewMapper;                 // MapStruct 映射器，转换面试历史
 
     /**
      * 获取所有简历列表
+     *
+     * 返回的列表包含：
+     * - 简历基本信息（ID、文件名、大小、上传时间等）
+     * - 最新分析分数（如果有）
+     * - 最后分析时间（如果有）
+     * - 面试次数（关联的面试会话数量）
+     * - 分析状态和错误信息
+     *
+     * @return 简历列表 DTO
      */
     public List<ResumeListItemDTO> getAllResumes() {
         List<ResumeEntity> resumes = resumePersistenceService.findAllResumes();
 
         return resumes.stream().map(resume -> {
-            // 获取最新分析结果的分数
+            // 获取最新分析结果的分数和时间
             Integer latestScore = null;
             LocalDateTime lastAnalyzedAt = null;
             Optional<ResumeAnalysisEntity> analysisOpt = resumePersistenceService.getLatestAnalysis(resume.getId());
@@ -56,10 +71,10 @@ public class ResumeHistoryService {
                 lastAnalyzedAt = analysis.getAnalyzedAt();
             }
 
-            // 获取面试次数
+            // 获取面试次数（关联的面试会话数量）
             int interviewCount = interviewPersistenceService.findByResumeId(resume.getId()).size();
 
-            // 使用 MapStruct 映射
+            // 使用 MapStruct 映射到 DTO
             return new ResumeListItemDTO(
                 resume.getId(),
                 resume.getOriginalFilename(),
@@ -77,6 +92,15 @@ public class ResumeHistoryService {
 
     /**
      * 获取简历详情（包含分析历史）
+     *
+     * 返回的详情包含：
+     * - 简历基本信息
+     * - 所有分析历史记录（按时间倒序）
+     * - 所有面试历史记录
+     *
+     * @param id 简历ID
+     * @return 简历详情 DTO
+     * @throws BusinessException 如果简历不存在
      */
     public ResumeDetailDTO getResumeDetail(Long id) {
         Optional<ResumeEntity> resumeOpt = resumePersistenceService.findById(id);
@@ -86,7 +110,7 @@ public class ResumeHistoryService {
 
         ResumeEntity resume = resumeOpt.get();
 
-        // 获取所有分析记录，使用 MapStruct 批量转换
+        // 获取所有分析记录，使用 MapStruct 批量转换（包含 JSON 字段解析）
         List<ResumeAnalysisEntity> analyses = resumePersistenceService.findAnalysesByResumeId(id);
         List<ResumeDetailDTO.AnalysisHistoryDTO> analysisHistory = resumeMapper.toAnalysisHistoryDTOList(
             analyses,
@@ -116,7 +140,13 @@ public class ResumeHistoryService {
     }
 
     /**
-     * 从 JSON 提取 strengths
+     * 从 JSON 提取优点列表
+     *
+     * 从数据库的 JSON 字段解析优点列表
+     * 用于历史记录展示
+     *
+     * @param entity 分析记录实体
+     * @return 优点列表，如果解析失败返回空列表
      */
     private List<String> extractStrengths(ResumeAnalysisEntity entity) {
         try {
@@ -134,7 +164,13 @@ public class ResumeHistoryService {
     }
 
     /**
-     * 从 JSON 提取 suggestions
+     * 从 JSON 提取改进建议列表
+     *
+     * 从数据库的 JSON 字段解析改进建议列表
+     * 用于历史记录展示
+     *
+     * @param entity 分析记录实体
+     * @return 改进建议列表，如果解析失败返回空列表
      */
     private List<Object> extractSuggestions(ResumeAnalysisEntity entity) {
         try {
@@ -152,7 +188,14 @@ public class ResumeHistoryService {
     }
 
     /**
-     * 导出简历分析报告为PDF
+     * 导出简历分析报告为 PDF
+     *
+     * 生成包含简历分析结果的 PDF 报告
+     * 报告包含：总分、各维度评分、优点、改进建议等
+     *
+     * @param resumeId 简历ID
+     * @return PDF 导出结果（包含字节数组和文件名）
+     * @throws BusinessException 如果简历或分析结果不存在，或导出失败
      */
     public ExportResult exportAnalysisPdf(Long resumeId) {
         Optional<ResumeEntity> resumeOpt = resumePersistenceService.findById(resumeId);
@@ -167,6 +210,7 @@ public class ResumeHistoryService {
         }
 
         try {
+            // 调用 PDF 导出服务生成报告
             byte[] pdfBytes = pdfExportService.exportResumeAnalysis(resume, analysisOpt.get());
             String filename = "简历分析报告_" + resume.getOriginalFilename() + ".pdf";
 
@@ -178,7 +222,10 @@ public class ResumeHistoryService {
     }
 
     /**
-     * PDF导出结果
+     * PDF 导出结果
+     *
+     * @param pdfBytes PDF 文件的字节数组
+     * @param filename 文件名
      */
     public record ExportResult(byte[] pdfBytes, String filename) {}
 }

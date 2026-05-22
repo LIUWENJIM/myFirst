@@ -13,9 +13,14 @@ import java.util.function.Function;
 
 /**
  * 简历相关的对象映射器
- * 使用MapStruct自动生成转换代码
- * <p>
- * 注意：JSON字段(strengthsJson, suggestionsJson)需要在Service层手动处理
+ *
+ * 使用 MapStruct 自动生成 Entity/DTO 转换代码。
+ * 被 ResumePersistenceService、ResumeHistoryService 等调用。
+ *
+ * 注意事项：
+ * - JSON 字段（strengthsJson, suggestionsJson）需要在 Service 层手动解析后传入
+ * - 部分字段需要在 Service 层手动设置（如 resume 关联、analyzedAt 等）
+ * - 使用 @Named("nullToZero") 将 null Integer 转换为 0
  */
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ResumeMapper {

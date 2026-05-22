@@ -5,11 +5,25 @@ import interview.guide.common.ai.PromptSecurityConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+/**
+ * 语音面试提示词服务
+ *
+ * 为语音面试场景生成系统提示词，包含：
+ * 1. 面试官角色设定（通过 Skill 工具加载）
+ * 2. 语音输出约束（简洁、口语化、不使用 Markdown）
+ * 3. 候选人简历内容（可选，用安全分隔符包裹）
+ * 4. 防注入指令（PromptSecurityConstants）
+ *
+ * 与文字面试提示词的区别：
+ * - 语音面试要求更简短的回答（2-4 句）
+ * - 不允许使用 Markdown、列表、代码块
+ * - 语气更口语化
+ */
 @Service
 @Slf4j
 public class VoiceInterviewPromptService {
 
-    private final PromptSanitizer promptSanitizer;
+    private final PromptSanitizer promptSanitizer;  // Prompt 注入净化工具
 
     public VoiceInterviewPromptService(PromptSanitizer promptSanitizer) {
         this.promptSanitizer = promptSanitizer;

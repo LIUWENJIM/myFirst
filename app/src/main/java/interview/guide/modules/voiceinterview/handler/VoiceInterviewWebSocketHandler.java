@@ -43,25 +43,41 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * WebSocket Handler for Voice Interview
  * 语音面试 WebSocket 处理器
- * <p>
- * Handles real-time bidirectional audio streaming for voice interviews.
- * Processing pipeline: User Audio → STT → LLM → TTS → AI Audio
- * </p>
+ *
+ * 处理语音面试的实时双向音频流，是语音面试模块的核心组件。
+ * 处理流水线：用户音频 -> ASR语音识别 -> LLM生成回复 -> TTS语音合成 -> AI音频
+ *
+ * 核心职责：
+ * 1. WebSocket 连接管理：建立/断开连接，会话状态维护
+ * 2. 音频接收与转发：接收用户音频，发送 AI 音频
+ * 3. ASR 语音识别：调用通义千问 ASR 服务，获取用户语音文本
+ * 4. LLM 回复生成：调用 LLM 生成面试回复文本
+ * 5. TTS 语音合成：调用通义千问 TTS 服务，将 AI 文本转为音频
+ * 6. 阶段管理：控制面试阶段切换（自我介绍->技术面->项目面->HR面）
+ * 7. 超时检测：5 分钟无活动自动暂停面试
+ *
+ * 并发模型：
+ * - 每个 WebSocket 连接对应一个 SessionState
+ * - ASR 使用 Semaphore 控制并发（maxConcurrentTtsPerSession）
+ * - LLM/TTS 使用虚拟线程池执行（不阻塞 WebSocket 线程）
+ * - 用户语音合并使用 ScheduledExecutorService（防抖动）
+ *
+ * 缓存：
+ * - 开场白音频缓存（openingAudioCache）：同一技能的开场白只合成一次
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler implements DisposableBean {
 
-    private final ObjectMapper objectMapper;
-    private final QwenAsrService sttService;
-    private final QwenTtsService ttsService;
-    private final DashscopeLlmService llmService;
-    private final VoiceInterviewService interviewService;
-    private final VoiceInterviewProperties voiceInterviewProperties;
-    private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+    private final ObjectMapper objectMapper;                        // JSON 序列化/反序列化
+    private final QwenAsrService sttService;                        // 通义千问 ASR 语音识别服务
+    private final QwenTtsService ttsService;                        // 通义千问 TTS 语音合成服务
+    private final DashscopeLlmService llmService;                   // 通义千问 LLM 服务（生成面试回复）
+    private final VoiceInterviewService interviewService;           // 语音面试业务服务
+    private final VoiceInterviewProperties voiceInterviewProperties; // 语音面试配置
+    private final ObjectProvider<MeterRegistry> meterRegistryProvider; // Micrometer 指标（延迟注入）
 
     /**
      * 合并多段 STT 定稿后再触发 LLM 的延迟调度（与 {@link VoiceInterviewProperties#getUserUtteranceDebounceMs()} 配合）
@@ -73,13 +89,12 @@ public class VoiceInterviewWebSocketHandler extends TextWebSocketHandler impleme
      */
     private final ExecutorService voicePipelineExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    private final Map<String, SessionState> sessionStates = new ConcurrentHashMap<>();
-    private final Map<String, byte[]> openingAudioCache = new ConcurrentHashMap<>();
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();       // 活跃 WebSocket 会话
+    private final Map<String, SessionState> sessionStates = new ConcurrentHashMap<>();      // 会话状态（每连接独立）
+    private final Map<String, byte[]> openingAudioCache = new ConcurrentHashMap<>();        // 开场白音频缓存（key=skillId）
 
-    // Activity tracking for pause timeout
-    // 活动跟踪（用于暂停超时）
-    private final Map<String, Long> lastActivityTime = new ConcurrentHashMap<>();
+    // 活动跟踪（用于暂停超时检测）
+    private final Map<String, Long> lastActivityTime = new ConcurrentHashMap<>();           // 最后活动时间戳
     private static final long WARNING_TIME_MS = (long) (4.5 * 60 * 1000);  // 4:30
     private static final long PAUSE_TIMEOUT_MS = 5 * 60 * 1000;            // 5:00
     private static final int WS_SEND_TIME_LIMIT_MS = 10_000;

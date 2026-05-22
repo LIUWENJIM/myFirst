@@ -30,32 +30,45 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Voice Interview Service
  * 语音面试服务
- * <p>
- * Provides business logic for voice interview session management including:
- * - Session lifecycle management (create, end, retrieve)
- * - Phase transitions and state tracking
- * - Message persistence and conversation history
- * - Redis caching for active sessions
- * </p>
+ *
+ * 管理语音面试会话的完整生命周期，包括会话创建、阶段切换、消息持久化和评估触发。
+ * 被 VoiceInterviewWebSocketHandler 和 VoiceInterviewController 调用。
+ *
+ * 核心职责：
+ * 1. 会话生命周期：创建会话 -> 进行中 -> 暂停/恢复 -> 结束
+ * 2. 阶段管理：自我介绍(INTRO) -> 技术面(TECH) -> 项目面(PROJECT) -> HR面(HR)
+ * 3. 消息持久化：保存用户语音识别文本和 AI 生成的回复
+ * 4. Redis 缓存：活跃会话缓存 1 小时，减少数据库查询
+ * 5. 评估触发：会话结束时发送异步评估任务到 Redis Stream
+ *
+ * 阶段切换规则：
+ * - 达到最大时长：强制切换
+ * - 达到最大问题数：建议切换
+ * - 达到建议时长 + 最小问题数：建议切换
+ *
+ * 缓存策略：
+ * - Key: voice:interview:session:{sessionId}
+ * - TTL: 1 小时
+ * - 写入：创建会话、恢复会话、切换阶段时
+ * - 失效：结束会话、暂停会话时
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class VoiceInterviewService {
 
-    private final VoiceInterviewSessionRepository sessionRepository;
-    private final VoiceInterviewMessageRepository messageRepository;
-    private final VoiceInterviewEvaluationRepository evaluationRepository;
-    private final RedissonClient redissonClient;
-    private final VoiceInterviewProperties properties;
-    private final VoiceEvaluateStreamProducer voiceEvaluateStreamProducer;
-    private final LlmProviderRegistry llmProviderRegistry;
+    private final VoiceInterviewSessionRepository sessionRepository;       // 会话数据库仓库
+    private final VoiceInterviewMessageRepository messageRepository;       // 消息数据库仓库
+    private final VoiceInterviewEvaluationRepository evaluationRepository; // 评估结果数据库仓库
+    private final RedissonClient redissonClient;                           // Redisson 客户端（缓存操作）
+    private final VoiceInterviewProperties properties;                     // 语音面试配置属性
+    private final VoiceEvaluateStreamProducer voiceEvaluateStreamProducer; // 异步评估任务生产者
+    private final LlmProviderRegistry llmProviderRegistry;                 // LLM 提供者注册中心
 
-    private static final String SESSION_CACHE_KEY_PREFIX = "voice:interview:session:";
-    private static final int CACHE_TTL_HOURS = 1;
-    private static final String DEFAULT_USER_ID = "default";
+    private static final String SESSION_CACHE_KEY_PREFIX = "voice:interview:session:";  // Redis 缓存 Key 前缀
+    private static final int CACHE_TTL_HOURS = 1;                                        // 缓存过期时间（小时）
+    private static final String DEFAULT_USER_ID = "default";                             // 默认用户ID（未登录场景）
 
     /**
      * Create a new voice interview session

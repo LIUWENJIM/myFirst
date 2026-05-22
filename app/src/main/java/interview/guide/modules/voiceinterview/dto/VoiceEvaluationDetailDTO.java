@@ -8,8 +8,10 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Voice evaluation detail DTO — aligned with text-based interview InterviewDetailDTO.
- * This allows the frontend to reuse InterviewDetailPanel for rendering.
+ * 语音面试评估详情 DTO
+ *
+ * 与文字面试的 InterviewDetailDTO 格式对齐，允许前端复用 InterviewDetailPanel 组件渲染。
+ * 包含总体评分、逐题评估、优势、改进和参考答案。
  */
 @Data
 @Builder

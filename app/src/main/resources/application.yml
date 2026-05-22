@@ -90,7 +90,7 @@ spring:
 # Application custom configuration
 app:
   ai:
-    default-provider: dashscope
+    default-provider: mimo
     default-embedding-provider: dashscope
     embedding-dimensions: ${APP_AI_EMBEDDING_DIMENSIONS:1024}
     security:
@@ -105,7 +105,7 @@ app:
     providers:
       dashscope:
         base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-        api-key: ${AI_BAILIAN_API_KEY:sk-ca79f778c6734d179ab934aac87eaef9}
+        api-key: ${AI_BAILIAN_API_KEY:sk-61b7bdf08b5d4d4e90e843db439c1d68}
         model: ${AI_MODEL:qwen3.5-flash}
         embedding-model: text-embedding-v3
         embedding-dimensions: 1024
@@ -116,6 +116,12 @@ app:
         model: qwen2.5-7b-instruct
         supports-embedding: false
       # ===== 预设 Provider（填完 API Key 后即可使用）=====
+      # 小米 MiMo（OpenAI 兼容） https://platform.xiaomimimo.com
+      mimo:
+        base-url: https://token-plan-cn.xiaomimimo.com/v1
+        api-key: ${PROVIDER_MIMO_API_KEY:tp-courc9xymcpml873kuqlqr36oun7fn51mi2u4injrqc0jd4s}
+        model: ${PROVIDER_MIMO_MODEL:mimo-v2.5-pro}
+        supports-embedding: false
       # Moonshot AI / Kimi（OpenAI 兼容） https://platform.moonshot.cn/
       kimi:
         base-url: https://api.moonshot.cn/v1
@@ -126,7 +132,7 @@ app:
       # DeepSeek（OpenAI 兼容） https://api-docs.deepseek.com/
       deepseek:
         base-url: https://api.deepseek.com
-        api-key: ${PROVIDER_DEEPSEEK_API_KEY:}
+        api-key: ${PROVIDER_DEEPSEEK_API_KEY:sk-b5efd4c0062b453c99c0481acce87598}
         model: ${PROVIDER_DEEPSEEK_MODEL:deepseek-v4-flash}
         supports-embedding: false
       # 智谱 AI / GLM（OpenAI 兼容） https://open.bigmodel.cn/
@@ -182,8 +188,8 @@ app:
   # RustFS (S3兼容) 存储配置
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
-    access-key: ${APP_STORAGE_ACCESS_KEY:KacxGpC1qMiZ24hUZL4p}
-    secret-key: ${APP_STORAGE_SECRET_KEY:VN2ZfnpVXm6dZsjbvqHQVcnTXizOidPuRkNlQXio}
+    access-key: ${APP_STORAGE_ACCESS_KEY:YPaDp1wMk6Y60RIgyAq7}
+    secret-key: ${APP_STORAGE_SECRET_KEY:8mE1Je5iqqZ3mp1xxnoHprQC7nfvt3HNsx4D7y5V}
     bucket: ${APP_STORAGE_BUCKET:interview-guide}
     region: ${APP_STORAGE_REGION:us-east-1}
   

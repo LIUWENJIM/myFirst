@@ -30,20 +30,33 @@ import java.util.stream.Collectors;
 
 /**
  * 语音面试评估服务
- * 复用 UnifiedEvaluationService 的分批评估 + 结构化输出 + 降级兜底
+ *
+ * 负责语音面试结束后的评估生成和评估结果查询。
+ * 复用 UnifiedEvaluationService 的分批评估 + 结构化输出 + 降级兜底机制。
+ *
+ * 评估流程：
+ * 1. 从数据库加载会话的所有对话消息
+ * 2. 构建 QaRecord 列表（AI 问题 + 用户回答）
+ * 3. 调用 UnifiedEvaluationService 生成评估报告
+ * 4. 将评估结果序列化为 JSON 保存到数据库
+ *
+ * 与文字面试评估的区别：
+ * - 语音面试的"问题"是 AI 生成的对话文本（aiGeneratedText）
+ * - 语音面试的"回答"是语音识别结果（userRecognizedText）
+ * - 类别通过关键词推断（inferCategory），而非预先定义
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class VoiceInterviewEvaluationService {
 
-    private final UnifiedEvaluationService unifiedEvaluationService;
-    private final LlmProviderRegistry llmProviderRegistry;
-    private final VoiceInterviewEvaluationRepository evaluationRepository;
-    private final VoiceInterviewMessageRepository messageRepository;
-    private final VoiceInterviewSessionRepository sessionRepository;
-    private final ObjectMapper objectMapper;
-    private final InterviewSkillService skillService;
+    private final UnifiedEvaluationService unifiedEvaluationService;       // 统一评估引擎（核心）
+    private final LlmProviderRegistry llmProviderRegistry;                 // LLM 提供者注册中心
+    private final VoiceInterviewEvaluationRepository evaluationRepository; // 评估结果仓库
+    private final VoiceInterviewMessageRepository messageRepository;       // 消息仓库
+    private final VoiceInterviewSessionRepository sessionRepository;       // 会话仓库
+    private final ObjectMapper objectMapper;                               // JSON 序列化/反序列化
+    private final InterviewSkillService skillService;                      // 面试技能服务（获取参考答案基线）
 
     /**
      * 生成语音面试评估（由异步消费者调用）

@@ -30,8 +30,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * PDF导出服务
- * PDF Export Service for resume analysis and interview reports
+ * PDF 导出服务
+ *
+ * 使用 iText 生成 PDF 文档，支持中文（嵌入字体）。
+ * 被简历模块和面试模块调用，用于导出分析报告和面试报告。
+ *
+ * 支持的导出类型：
+ * 1. 简历分析报告：包含评分、优势、建议等
+ * 2. 面试报告：包含问答记录、评分、参考答案等
+ *
+ * 技术实现：
+ * - 使用 iText 7 库生成 PDF
+ * - 嵌入中文字体（避免中文乱码）
+ * - 支持表格、段落、颜色等排版
  */
 @Slf4j
 @Service

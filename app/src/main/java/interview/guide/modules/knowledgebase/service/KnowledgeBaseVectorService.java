@@ -19,18 +19,39 @@ import java.util.stream.Collectors;
 /**
  * 知识库向量存储服务
  * 负责文档分块、向量化和检索
+ *
+ * 核心功能：
+ * 1. 文档分块：将长文本切分为多个小块（chunk）
+ * 2. 向量化：将文本块转换为向量表示
+ * 3. 向量存储：将向量存储到向量数据库
+ * 4. 相似度搜索：根据查询文本搜索相关文档
+ * 5. 向量删除：删除指定知识库的所有向量数据
+ *
+ * 技术栈：
+ * - VectorStore：Spring AI 向量存储抽象
+ * - TextSplitter：文本分块器（使用 TokenTextSplitter）
+ * - VectorRepository：向量数据仓库（自定义删除操作）
  */
 @Slf4j
 @Service
 public class KnowledgeBaseVectorService {
-    
+
     /**
      * 阿里云 DashScope Embedding API 批量大小限制
+     * 每次最多处理 10 个文本块
      */
     private static final int MAX_BATCH_SIZE = 10;
-    private final VectorStore vectorStore;
-    private final TextSplitter textSplitter;
-    private final VectorRepository vectorRepository;
+
+    private final VectorStore vectorStore;           // 向量存储（Spring AI 抽象）
+    private final TextSplitter textSplitter;         // 文本分块器
+    private final VectorRepository vectorRepository; // 向量数据仓库（自定义删除操作）
+
+    /**
+     * 构造函数，初始化向量存储和文本分块器
+     *
+     * @param vectorStore      向量存储
+     * @param vectorRepository 向量数据仓库
+     */
     public KnowledgeBaseVectorService(VectorStore vectorStore, VectorRepository vectorRepository) {
         this.vectorStore = vectorStore;
         this.vectorRepository = vectorRepository;
@@ -39,8 +60,16 @@ public class KnowledgeBaseVectorService {
     }
     /**
      * 将知识库内容向量化并存储
+     *
+     * 向量化流程：
+     * 1. 删除该知识库的旧向量数据（避免重复）
+     * 2. 将文本分块（每个 chunk 约 800 tokens）
+     * 3. 为每个 chunk 添加 metadata（知识库ID）
+     * 4. 分批向量化并存储（阿里云 DashScope API 限制 batch size <= 10）
+     *
      * @param knowledgeBaseId 知识库ID
-     * @param content 知识库文本内容
+     * @param content         知识库文本内容
+     * @throws BusinessException 如果向量化失败
      */
     @Transactional
     public void vectorizeAndStore(Long knowledgeBaseId, String content) {
@@ -48,22 +77,24 @@ public class KnowledgeBaseVectorService {
         try {
             // 1. 先删除该知识库的旧向量数据
             deleteByKnowledgeBaseId(knowledgeBaseId);
-            
-            // 2. 将文本分块
+
+            // 2. 将文本分块（每个 chunk 约 800 tokens）
             List<Document> chunks = textSplitter.apply(
                 List.of(new Document(content))
             );
-            
+
             log.info("文本分块完成: {} 个chunks", chunks.size());
-            
-            // 3. 为每个chunk添加metadata（知识库ID）
+
+            // 3. 为每个 chunk 添加 metadata（知识库ID）
             // 统一使用 String 类型存储，确保查询一致性
             chunks.forEach(chunk -> chunk.getMetadata().put("kb_id", knowledgeBaseId.toString()));
+
             // 4. 分批向量化并存储（阿里云 DashScope API 限制 batch size <= 10）
             int totalChunks = chunks.size();
             int batchCount = (totalChunks + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE; // 向上取整
             log.info("开始分批向量化: 总共 {} 个chunks，分 {} 批处理，每批最多 {} 个",
                     totalChunks, batchCount, MAX_BATCH_SIZE);
+
             for (int i = 0; i < batchCount; i++) {
                 int start = i * MAX_BATCH_SIZE;
                 int end = Math.min(start + MAX_BATCH_SIZE, totalChunks);
@@ -71,6 +102,7 @@ public class KnowledgeBaseVectorService {
                 log.debug("处理第 {}/{} 批: chunks {}-{}", i + 1, batchCount, start + 1, end);
                 vectorStore.add(batch);
             }
+
             log.info("知识库向量化完成: kbId={}, chunks={}, batches={}",
                     knowledgeBaseId, totalChunks, batchCount);
         } catch (Exception e) {
@@ -82,42 +114,53 @@ public class KnowledgeBaseVectorService {
     
     /**
      * 基于多个知识库进行相似度搜索
-     * 
-     * @param query 查询文本
+     *
+     * 搜索流程：
+     * 1. 构建搜索请求（包含查询文本、topK、最小分数）
+     * 2. 如果指定了知识库ID，添加过滤表达式
+     * 3. 执行向量相似度搜索
+     * 4. 如果前置过滤失败，回退到本地过滤
+     *
+     * @param query            查询文本
      * @param knowledgeBaseIds 知识库ID列表（如果为空则搜索所有）
-     * @param topK 返回top K个结果
+     * @param topK             返回 top K 个结果
+     * @param minScore         最小相似度分数（0-1 之间）
      * @return 相关文档列表
      */
     public List<Document> similaritySearch(String query, List<Long> knowledgeBaseIds, int topK, double minScore) {
         log.info("向量相似度搜索: query={}, kbIds={}, topK={}, minScore={}",
             query, knowledgeBaseIds, topK, minScore);
-        
+
         try {
+            // 构建搜索请求
             SearchRequest.Builder builder = SearchRequest.builder()
                 .query(query)
                 .topK(Math.max(topK, 1));
 
+            // 设置最小相似度分数
             if (minScore > 0) {
                 builder.similarityThreshold(minScore);
             }
 
+            // 如果指定了知识库ID，添加过滤表达式
             if (knowledgeBaseIds != null && !knowledgeBaseIds.isEmpty()) {
                 builder.filterExpression(buildKbFilterExpression(knowledgeBaseIds));
             }
 
+            // 执行向量相似度搜索
             List<Document> results = vectorStore.similaritySearch(builder.build());
             if (results == null) {
                 return List.of();
             }
 
-            // Apply topK limiting in case VectorStore returns more than requested
+            // 限制返回数量（防止 VectorStore 返回超过请求数量的结果）
             List<Document> limitedResults = results.stream()
                 .limit(topK)
                 .collect(Collectors.toList());
 
             log.info("搜索完成: 找到 {} 个相关文档", limitedResults.size());
             return limitedResults;
-            
+
         } catch (Exception e) {
             log.warn("向量搜索前置过滤失败，回退到本地过滤: {}", e.getMessage());
             return similaritySearchFallback(query, knowledgeBaseIds, topK, minScore);
@@ -185,7 +228,7 @@ public class KnowledgeBaseVectorService {
     /**
      * 删除指定知识库的所有向量数据
      * 委托给 VectorRepository 处理
-     * 
+     *
      * @param knowledgeBaseId 知识库ID
      */
     @Transactional(rollbackFor = Exception.class)

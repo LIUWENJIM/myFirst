@@ -9,7 +9,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Voice interview configuration properties
+ * 语音面试配置属性
+ *
+ * 配置前缀：app.voice-interview
+ * 管理语音面试的所有配置，包括阶段时长、阿里云 ASR/TTS、音频参数、限流等。
+ *
+ * 配置分组：
+ * - phase: 各面试阶段的时长和问题数配置
+ * - aliyun: 阿里云语音服务（ASR/TTS）配置
+ * - qwen: 通义千问实时语音模型配置
+ * - rate-limit: 限流配置
+ * - audio: 音频编码配置
+ * - opening: 开场白配置
+ * - llm-streaming: LLM 流式文本配置
  */
 @Data
 @Component

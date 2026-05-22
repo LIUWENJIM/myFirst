@@ -19,7 +19,18 @@ import java.util.Optional;
 
 /**
  * 面试会话 Redis 缓存服务
- * 管理面试会话在 Redis 中的存储
+ *
+ * 管理文字面试会话在 Redis 中的缓存，减少数据库查询。
+ * 被 InterviewSessionService 调用。
+ *
+ * 缓存策略：
+ * - Key: interview:session:{sessionId}
+ * - TTL: 24 小时
+ * - 写入：创建会话、恢复会话时
+ * - 失效：结束会话、删除会话时
+ *
+ * 额外功能：
+ * - 简历ID到会话ID的映射（interview:resume:{resumeId}），用于查找未完成会话
  */
 @Slf4j
 @Service

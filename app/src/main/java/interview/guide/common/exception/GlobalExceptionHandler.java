@@ -19,6 +19,22 @@ import java.util.stream.Collectors;
 
 /**
  * 全局异常处理器
+ *
+ * 统一拦截和处理所有异常，返回标准的 Result 格式响应。
+ * 所有异常处理方法都返回 HTTP 200 状态码，通过 Result 中的业务错误码区分异常类型。
+ * 这是项目的异常处理约定：前端统一通过 code 字段判断请求是否成功。
+ *
+ * 处理的异常类型：
+ * 1. BusinessException - 业务异常（最常见，由业务代码主动抛出）
+ * 2. MethodArgumentNotValidException - @Valid 参数校验失败
+ * 3. BindException - 参数绑定失败
+ * 4. MaxUploadSizeExceededException - 文件上传大小超限
+ * 5. IllegalArgumentException - 非法参数
+ * 6. ResourceAccessException - AI 服务网络异常（SSL、超时等）
+ * 7. RestClientException - AI 服务调用异常（401、429 等）
+ * 8. NoResourceFoundException - 404 资源不存在
+ * 9. HttpRequestMethodNotSupportedException - 请求方法不支持
+ * 10. Exception - 兜底未知异常
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

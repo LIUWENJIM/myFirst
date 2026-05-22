@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Session response with WebSocket URL
+ * 语音面试会话响应 DTO
+ *
+ * 创建或恢复会话后返回，包含 WebSocket 连接地址。
  */
 @Data
 @Builder

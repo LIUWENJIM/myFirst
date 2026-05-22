@@ -23,6 +23,16 @@ import java.util.UUID;
 
 /**
  * 文件存储服务
+ *
+ * 封装 S3 兼容对象存储（RustFS/MinIO）的文件操作。
+ * 被简历模块和知识库模块调用，负责文件的上传、下载和删除。
+ *
+ * 存储路径规则：
+ * - 简历：resumes/{日期}/{uuid}_{文件名}
+ * - 知识库：knowledgebase/{日期}/{uuid}_{文件名}
+ *
+ * 中文文件名处理：
+ * - 使用 pinyin4j 将中文文件名转换为拼音，避免 S3 兼容性问题
  */
 @Slf4j
 @Service

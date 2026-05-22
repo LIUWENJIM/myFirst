@@ -26,6 +26,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * LLM 提供商管理接口
+ * <p>
+ * 提供 AI 模型提供商的配置管理能力，包括：
+ * <ul>
+ *   <li>提供商的增删改查及连接测试</li>
+ *   <li>默认 LLM 和 Embedding 提供商的切换</li>
+ *   <li>语音识别（ASR）和语音合成（TTS）的配置管理</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api/llm-provider")
 @RequiredArgsConstructor

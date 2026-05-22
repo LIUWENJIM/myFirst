@@ -9,8 +9,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 /**
- * spring-ai-agent-utils 工具配置。
- * 当前先接入 SkillsTool，复用 resources/skills/{skillId}/SKILL.md。
+ * spring-ai-agent-utils 工具配置
+ *
+ * 配置面试技能工具（SkillsTool），让 LLM 能够引用面试技能知识库。
+ * 每个技能对应 resources/skills/{skillId}/SKILL.md 文件，
+ * LLM 在回答时可以参考这些技能文档来组织答案。
+ *
+ * Bean 名称：interviewSkillsToolCallback
+ * 注入位置：LlmProviderRegistry（作为 ChatClient 的默认工具）
+ *
+ * 配置来源：AgentUtilsProperties（app.ai.agent-utils.*）
  */
 @Configuration
 @Slf4j

@@ -6,7 +6,20 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 应用配置属性
+ * 简历模块配置属性
+ *
+ * 配置前缀：app.resume
+ * 管理简历上传目录和允许的文件类型。
+ *
+ * YAML 配置示例：
+ * <pre>
+ * app:
+ *   resume:
+ *     upload-dir: ./uploads/resumes
+ *     allowed-types:
+ *       - application/pdf
+ *       - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+ * </pre>
  */
 @Component
 @ConfigurationProperties(prefix = "app.resume")

@@ -26,7 +26,26 @@ import java.util.UUID;
 
 /**
  * 限流 AOP 切面
- * 支持可重复注解，逐条执行独立的限流规则，任一规则不通过即拒绝
+ *
+ * 通过拦截带有 {@link RateLimit} 注解的方法，实现声明式接口限流。
+ * 支持可重复注解（@RateLimit.Container），逐条执行独立的限流规则，任一规则不通过即拒绝请求。
+ *
+ * 限流算法：滑动窗口计数器（基于 Redis Lua 脚本实现）
+ * - 脚本路径：scripts/rate_limit_single.lua
+ * - 使用 Redisson 的 RScript.evalSha() 执行，SHA1 缓存避免重复传输脚本
+ * - 支持 NOSCRIPT 自动重载（Redis 重启后脚本缓存丢失的情况）
+ *
+ * 支持的限流维度（Dimension）：
+ * - GLOBAL：全局维度，所有请求共享计数器
+ * - IP：IP 维度，按客户端 IP 独立计数
+ * - USER：用户维度，按当前登录用户独立计数
+ *
+ * 降级策略：
+ * - 如果注解指定了 fallback 方法，限流触发时调用降级方法（而非抛异常）
+ * - 降级方法需在同一个类中，支持无参和同参两种签名
+ *
+ * Redis Key 格式：ratelimit:{ClassName:methodName}:dimension:identifier
+ * - 使用 Redis HashTag {} 确保相关 Key 落在同一 slot（集群模式友好）
  */
 @Slf4j
 @Aspect
@@ -34,11 +53,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RateLimitAspect {
 
-    private final RedissonClient redissonClient;
+    private final RedissonClient redissonClient;  // Redisson 客户端，用于执行 Lua 脚本
 
-    private static final String LUA_SCRIPT;
-    private String luaScriptSha;
-    private RScript rScript;
+    private static final String LUA_SCRIPT;       // 限流 Lua 脚本内容（类加载时从 classpath 读取）
+    private String luaScriptSha;                  // Lua 脚本的 SHA1 哈希（用于 evalSha 执行）
+    private RScript rScript;                      // Redisson 脚本执行器
 
     static {
         try {
@@ -49,12 +68,20 @@ public class RateLimitAspect {
         }
     }
 
+    /**
+     * 初始化：获取 Redisson 脚本执行器并加载 Lua 脚本到 Redis
+     * 脚本加载后 Redis 会缓存 SHA1，后续通过 evalSha 调用（减少网络传输）
+     */
     @jakarta.annotation.PostConstruct
     public void init() {
         rScript = redissonClient.getScript(StringCodec.INSTANCE);
         loadScript();
     }
 
+    /**
+     * 加载 Lua 脚本到 Redis，获取 SHA1 哈希
+     * Redis 重启后需要重新加载（NOSCRIPT 异常时也会触发）
+     */
     private void loadScript() {
         this.luaScriptSha = rScript.scriptLoad(LUA_SCRIPT);
         log.info("限流 Lua 脚本加载完成, SHA1: {}", luaScriptSha);
@@ -89,6 +116,26 @@ public class RateLimitAspect {
         return joinPoint.proceed();
     }
 
+    /**
+     * 执行限流 Lua 脚本
+     *
+     * Lua 脚本参数：
+     * - KEYS[1]: 限流 Key
+     * - ARGV[1]: 当前时间戳（毫秒）
+     * - ARGV[2]: 请求数量（固定为 1）
+     * - ARGV[3]: 时间窗口大小（毫秒）
+     * - ARGV[4]: 最大允许请求数
+     * - ARGV[5]: 请求唯一标识（用于日志追踪）
+     *
+     * 返回值：允许的剩余请求数（>0 表示通过，0 表示拒绝）
+     *
+     * @param key        限流 Redis Key
+     * @param nowMs      当前时间戳（毫秒）
+     * @param requestId  请求唯一标识
+     * @param intervalMs 时间窗口大小（毫秒）
+     * @param count      最大允许请求数
+     * @return 剩余请求数，null 表示转换失败
+     */
     private Long executeRateLimitScript(String key, long nowMs, String requestId, long intervalMs, double count) {
         List<Object> keysList = Collections.singletonList(key);
         Object[] args = {
@@ -125,6 +172,13 @@ public class RateLimitAspect {
         }
     }
 
+    /**
+     * 计算时间窗口大小（毫秒）
+     *
+     * @param interval 时间间隔数值
+     * @param unit     时间单位（MILLISECONDS/SECONDS/MINUTES/HOURS/DAYS）
+     * @return 时间窗口毫秒数
+     */
     private long calculateIntervalMs(long interval, RateLimit.TimeUnit unit) {
         return switch (unit) {
             case MILLISECONDS -> interval;
@@ -135,6 +189,13 @@ public class RateLimitAspect {
         };
     }
 
+    /**
+     * 将 Lua 脚本返回值转换为 Long
+     * Redisson 返回的可能是 Number 或 String 类型
+     *
+     * @param obj Lua 脚本返回值
+     * @return 转换后的 Long 值，转换失败返回 null
+     */
     private Long convertToLong(Object obj) {
         if (obj instanceof Number n) {
             return n.longValue();
@@ -151,6 +212,18 @@ public class RateLimitAspect {
         return null;
     }
 
+    /**
+     * 生成限流 Redis Key
+     *
+     * Key 格式：ratelimit:{ClassName:methodName}:dimension:identifier
+     * - 使用 Redis HashTag {} 确保同一方法的限流 Key 落在同一 slot（集群模式友好）
+     * - GLOBAL 维度无后缀，IP 维度追加客户端 IP，USER 维度追加用户ID
+     *
+     * @param className  类名
+     * @param methodName 方法名
+     * @param dimension  限流维度（GLOBAL/IP/USER）
+     * @return 限流 Redis Key
+     */
     private String generateKey(String className, String methodName, RateLimit.Dimension dimension) {
         String hashTag = "{" + className + ":" + methodName + "}";
         String keyPrefix = "ratelimit:" + hashTag;
@@ -162,6 +235,19 @@ public class RateLimitAspect {
         };
     }
 
+    /**
+     * 处理限流超限
+     *
+     * 策略：
+     * 1. 如果注解配置了 fallback 方法，调用降级方法（不抛异常）
+     * 2. 否则抛出 RateLimitExceededException 异常（由 GlobalExceptionHandler 处理）
+     *
+     * @param joinPoint  AOP 连接点
+     * @param rateLimit  限流注解（包含 fallback 配置）
+     * @param key        限流 Redis Key（用于日志）
+     * @return 降级方法的返回值
+     * @throws RateLimitExceededException 如果没有配置降级方法
+     */
     private Object handleRateLimitExceeded(ProceedingJoinPoint joinPoint, RateLimit rateLimit, String key)
             throws Throwable {
         String methodName = joinPoint.getSignature().getName();
@@ -190,6 +276,14 @@ public class RateLimitAspect {
         throw new RateLimitExceededException("请求过于频繁，请稍后再试");
     }
 
+    /**
+     * 查找降级方法
+     * 优先查找同参方法，其次查找无参方法
+     *
+     * @param joinPoint   AOP 连接点
+     * @param fallbackName 降级方法名
+     * @return 降级方法引用，未找到返回 null
+     */
     private Method findFallbackMethod(ProceedingJoinPoint joinPoint, String fallbackName) {
         Class<?> targetClass = joinPoint.getTarget().getClass();
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
@@ -212,6 +306,14 @@ public class RateLimitAspect {
         }
     }
 
+    /**
+     * 获取客户端真实 IP
+     *
+     * 优先级：X-Forwarded-For > X-Real-IP > Proxy-Client-IP > WL-Proxy-Client-IP > remoteAddr
+     * 如果存在多个代理 IP（逗号分隔），取第一个（即最接近客户端的 IP）
+     *
+     * @return 客户端 IP 地址，获取失败返回 "unknown"
+     */
     private String getClientIp() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
@@ -241,6 +343,15 @@ public class RateLimitAspect {
         return ip != null ? ip : "unknown";
     }
 
+    /**
+     * 获取当前登录用户 ID
+     *
+     * 优先从 request attribute "userId" 获取（由认证拦截器设置）
+     * 其次从请求头 "X-User-Id" 获取
+     * 未登录返回 "anonymous"
+     *
+     * @return 用户ID字符串，未登录返回 "anonymous"
+     */
     private String getCurrentUserId() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {

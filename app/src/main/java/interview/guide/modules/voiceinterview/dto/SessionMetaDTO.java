@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Session metadata for list display
+ * 语音面试会话元数据 DTO
+ *
+ * 用于会话列表展示，包含会话摘要信息。
  */
 @Data
 @Builder

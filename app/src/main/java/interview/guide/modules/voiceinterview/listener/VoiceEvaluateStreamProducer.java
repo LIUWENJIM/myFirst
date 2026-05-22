@@ -13,6 +13,13 @@ import java.util.Map;
 
 /**
  * 语音面试评估任务生产者
+ *
+ * 语音面试结束时，将评估任务发送到 Redis Stream 异步处理。
+ * 避免评估过程（LLM 调用）阻塞 WebSocket 连接关闭。
+ *
+ * 消息格式：
+ * - voiceSessionId: 语音面试会话ID
+ * - retryCount: 重试次数（初始为 0）
  */
 @Slf4j
 @Component

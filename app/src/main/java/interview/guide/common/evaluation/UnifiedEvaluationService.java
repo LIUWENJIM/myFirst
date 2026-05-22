@@ -26,25 +26,57 @@ import java.util.stream.Collectors;
 
 /**
  * 统一面试评估服务
- * 文字面试和语音面试共用的评估逻辑：分批评估 + 结构化输出 + 二次汇总 + 降级兜底
+ *
+ * 文字面试和语音面试共用的评估引擎，负责将用户的面试问答记录转化为结构化评估报告。
+ * 被 InterviewSessionService（文字面试）和 VoiceInterviewWebSocketHandler（语音面试）调用。
+ *
+ * 核心评估流程（三阶段）：
+ * 1. 分批评估（evaluateInBatches）：
+ *    - 将 N 道题按 batchSize 分批，每批独立调用 LLM 评估
+ *    - 每批输出：总分、总评、优势、改进、逐题评分和反馈
+ *    - 使用 StructuredOutputInvoker 确保 LLM 输出可被解析为 Java 对象
+ *    - 单批失败不影响其他批次，失败批次用 0 分兜底
+ *
+ * 2. 二次汇总（summarizeBatchResults）：
+ *    - 将所有批次的评估结果汇总为一份完整报告
+ *    - 再次调用 LLM 生成全局性的总评、优势和改进
+ *    - 如果汇总失败，降级为直接拼接各批次结果
+ *
+ * 3. 构建报告（buildReport）：
+ *    - 合并逐题评估结果和参考答案
+ *    - 按类别（category）计算平均分
+ *    - 生成最终的 EvaluationReport
+ *
+ * 提示词模板：
+ * - 系统提示词 + 用户提示词（分批评估阶段）
+ * - 汇总系统提示词 + 汇总用户提示词（二次汇总阶段）
+ * - 所有模板从 resources/prompts/ 加载，通过 InterviewEvaluationProperties 配置路径
+ *
+ * 降级策略：
+ * - 单批评估失败 -> 该题 0 分兜底
+ * - 二次汇总失败 -> 直接拼接各批次结果
+ * - 超长简历截断到 3000 字符，超长参考基线截断到 6000 字符
  */
 @Service
 public class UnifiedEvaluationService {
 
     private static final Logger log = LoggerFactory.getLogger(UnifiedEvaluationService.class);
-    private static final int MAX_REFERENCE_CONTEXT_CHARS = 6000;
+    private static final int MAX_REFERENCE_CONTEXT_CHARS = 6000;  // 参考基线最大字符数（超过截断）
 
-    private final PromptTemplate systemPromptTemplate;
-    private final PromptTemplate userPromptTemplate;
-    private final BeanOutputConverter<BatchReportDTO> outputConverter;
-    private final PromptTemplate summarySystemPromptTemplate;
-    private final PromptTemplate summaryUserPromptTemplate;
-    private final BeanOutputConverter<SummaryDTO> summaryOutputConverter;
-    private final StructuredOutputInvoker structuredOutputInvoker;
-    private final int evaluationBatchSize;
-    private final ResourceLoader resourceLoader;
+    // 四套提示词模板 + 对应的 BeanOutputConverter
+    private final PromptTemplate systemPromptTemplate;       // 分批评估系统提示词
+    private final PromptTemplate userPromptTemplate;         // 分批评估用户提示词
+    private final BeanOutputConverter<BatchReportDTO> outputConverter;  // 批次结果转换器（LLM 结构化输出）
 
-    // 批次评估结果
+    private final PromptTemplate summarySystemPromptTemplate;   // 二次汇总系统提示词
+    private final PromptTemplate summaryUserPromptTemplate;     // 二次汇总用户提示词
+    private final BeanOutputConverter<SummaryDTO> summaryOutputConverter;  // 汇总结果转换器
+
+    private final StructuredOutputInvoker structuredOutputInvoker;  // 结构化输出调用器（带重试机制）
+    private final int evaluationBatchSize;                          // 每批评估的题目数量（可配置）
+    private final ResourceLoader resourceLoader;                    // 资源加载器（用于读取提示词模板文件）
+
+    // 批次评估结果 DTO（LLM 结构化输出的目标类型）
     private record BatchReportDTO(
         int overallScore,
         String overallFeedback,
@@ -53,6 +85,7 @@ public class UnifiedEvaluationService {
         List<QuestionEvalDTO> questionEvaluations
     ) {}
 
+    // 单题评估结果 DTO
     private record QuestionEvalDTO(
         int questionIndex,
         int score,
@@ -61,18 +94,28 @@ public class UnifiedEvaluationService {
         List<String> keyPoints
     ) {}
 
+    // 批次执行结果（包含批次范围和评估报告）
     private record BatchResult(
         int startIndex,
         int endIndex,
         BatchReportDTO report
     ) {}
 
+    // 二次汇总结果 DTO（LLM 结构化输出的目标类型）
     private record SummaryDTO(
         String overallFeedback,
         List<String> strengths,
         List<String> improvements
     ) {}
 
+    /**
+     * 构造函数，加载提示词模板和初始化转换器
+     *
+     * @param structuredOutputInvoker 结构化输出调用器（带重试）
+     * @param resourceLoader          资源加载器
+     * @param evaluationProperties    评估配置属性（提示词路径、批次大小等）
+     * @throws IOException 如果提示词模板文件加载失败
+     */
     public UnifiedEvaluationService(
             StructuredOutputInvoker structuredOutputInvoker,
             ResourceLoader resourceLoader,
@@ -143,11 +186,28 @@ public class UnifiedEvaluationService {
             summary.overallFeedback(), summary.strengths(), summary.improvements());
     }
 
+    /**
+     * 从 classpath 加载提示词模板文件
+     *
+     * @param path 模板路径（如 "prompts/evaluation_system.st"）
+     * @return 模板内容字符串
+     * @throws IOException 如果文件不存在或读取失败
+     */
     private String loadPrompt(String path) throws IOException {
         Resource resource = resourceLoader.getResource(path);
         return resource.getContentAsString(StandardCharsets.UTF_8);
     }
 
+    /**
+     * 分批评估：将题目按 batchSize 分批，每批独立调用 LLM
+     *
+     * @param chatClient      LLM 客户端
+     * @param sessionId       会话ID（用于日志）
+     * @param resumeContext   简历摘要（可为空）
+     * @param qaRecords       所有问答记录
+     * @param referenceContext 参考基线（可为空）
+     * @return 各批次的评估结果列表
+     */
     private List<BatchResult> evaluateInBatches(ChatClient chatClient, String sessionId,
                                                  String resumeContext, List<QaRecord> qaRecords,
                                                  String referenceContext) {
@@ -161,6 +221,22 @@ public class UnifiedEvaluationService {
         return results;
     }
 
+    /**
+     * 评估单个批次
+     *
+     * 流程：
+     * 1. 构建问答记录文本
+     * 2. 渲染系统提示词和用户提示词（填充变量）
+     * 3. 调用 StructuredOutputInvoker 获取结构化结果
+     * 4. 失败时返回 null（后续合并逻辑用 0 分兜底）
+     *
+     * @param chatClient      LLM 客户端
+     * @param sessionId       会话ID
+     * @param resumeContext   简历摘要
+     * @param referenceContext 参考基线
+     * @param batch           当前批次的问答记录
+     * @return 批次评估结果，失败返回 null
+     */
     private BatchReportDTO evaluateBatch(ChatClient chatClient, String sessionId,
                                           String resumeContext, String referenceContext,
                                           List<QaRecord> batch) {
@@ -188,6 +264,14 @@ public class UnifiedEvaluationService {
         }
     }
 
+    /**
+     * 构建问答记录文本（用于填充提示词模板中的 qaRecords 变量）
+     *
+     * 格式：问题1 [类别]: 问题内容\n回答: 回答内容\n\n
+     *
+     * @param batch 当前批次的问答记录
+     * @return 格式化的问答记录文本
+     */
     private String buildQARecords(List<QaRecord> batch) {
         StringBuilder sb = new StringBuilder();
         for (QaRecord q : batch) {
@@ -199,6 +283,14 @@ public class UnifiedEvaluationService {
         return sb.toString();
     }
 
+    /**
+     * 合并各批次的逐题评估结果
+     *
+     * 按题目顺序依次合并，如果某题评估失败（LLM 未返回结果），用 0 分兜底。
+     *
+     * @param batchResults 各批次的评估结果
+     * @return 合并后的逐题评估列表
+     */
     private List<QuestionEvalDTO> mergeQuestionEvaluations(List<BatchResult> batchResults) {
         List<QuestionEvalDTO> merged = new ArrayList<>();
         for (BatchResult result : batchResults) {
@@ -221,6 +313,12 @@ public class UnifiedEvaluationService {
         return merged;
     }
 
+    /**
+     * 合并各批次的总体反馈（拼接各批次的 overallFeedback）
+     *
+     * @param batchResults 各批次的评估结果
+     * @return 合并后的总体反馈
+     */
     private String mergeOverallFeedback(List<BatchResult> batchResults) {
         String feedback = batchResults.stream()
             .map(BatchResult::report)
@@ -230,6 +328,13 @@ public class UnifiedEvaluationService {
         return feedback.isBlank() ? "本次面试已完成分批评估，但未生成有效综合评语。" : feedback;
     }
 
+    /**
+     * 合并各批次的优势或改进建议（去重，最多保留 8 条）
+     *
+     * @param batchResults  各批次的评估结果
+     * @param strengthsMode true=合并优势，false=合并改进建议
+     * @return 去重后的列表
+     */
     private List<String> mergeListItems(List<BatchResult> batchResults, boolean strengthsMode) {
         Set<String> merged = new LinkedHashSet<>();
         for (BatchResult result : batchResults) {
@@ -245,6 +350,26 @@ public class UnifiedEvaluationService {
         return merged.stream().limit(8).toList();
     }
 
+    /**
+     * 二次汇总：将各批次结果汇总为全局评估报告
+     *
+     * 流程：
+     * 1. 渲染汇总提示词（填充类别摘要、逐题亮点等变量）
+     * 2. 调用 LLM 生成全局总评、优势和改进
+     * 3. 如果 LLM 返回结果为空，降级为批次拼接结果
+     * 4. 如果 LLM 调用完全失败，降级为批次聚合结果
+     *
+     * @param chatClient         LLM 客户端
+     * @param sessionId          会话ID
+     * @param resumeContext      简历摘要
+     * @param referenceContext   参考基线
+     * @param qaRecords          所有问答记录
+     * @param evaluations        合并后的逐题评估
+     * @param fallbackFeedback   兜底总体反馈（批次拼接）
+     * @param fallbackStrengths  兜底优势列表
+     * @param fallbackImprovements 兜底改进列表
+     * @return 汇总结果（含总评、优势、改进）
+     */
     private SummaryDTO summarizeBatchResults(
             ChatClient chatClient, String sessionId, String resumeContext, String referenceContext,
             List<QaRecord> qaRecords, List<QuestionEvalDTO> evaluations,
@@ -279,6 +404,13 @@ public class UnifiedEvaluationService {
         }
     }
 
+    /**
+     * 清洗列表数据：去空、去重、截断
+     *
+     * @param primary  主要数据（LLM 返回）
+     * @param fallback 兜底数据（批次拼接）
+     * @return 清洗后的列表（最多 8 条）
+     */
     private List<String> sanitizeItems(List<String> primary, List<String> fallback) {
         List<String> source = (primary != null && !primary.isEmpty()) ? primary : fallback;
         if (source == null || source.isEmpty()) return List.of();
@@ -287,6 +419,22 @@ public class UnifiedEvaluationService {
             .map(String::trim).distinct().limit(8).toList();
     }
 
+    /**
+     * 构建最终评估报告
+     *
+     * 1. 遍历所有题目，构建逐题评估和参考答案
+     * 2. 按类别（category）计算平均分
+     * 3. 计算总体平均分
+     * 4. 组装 EvaluationReport 返回
+     *
+     * @param sessionId        会话ID
+     * @param qaRecords        所有问答记录
+     * @param evaluations      合并后的逐题评估
+     * @param overallFeedback  总体反馈
+     * @param strengths        优势列表
+     * @param improvements     改进列表
+     * @return 完整的评估报告
+     */
     private EvaluationReport buildReport(String sessionId, List<QaRecord> qaRecords,
                                           List<QuestionEvalDTO> evaluations,
                                           String overallFeedback,
@@ -343,6 +491,14 @@ public class UnifiedEvaluationService {
         );
     }
 
+    /**
+     * 构建类别摘要（用于二次汇总提示词）
+     * 格式："- 类别名: 平均分 XX, 题数 XX"
+     *
+     * @param qaRecords   所有问答记录
+     * @param evaluations 逐题评估结果
+     * @return 类别摘要文本
+     */
     private String buildCategorySummary(List<QaRecord> qaRecords, List<QuestionEvalDTO> evaluations) {
         Map<String, List<Integer>> categoryScores = new HashMap<>();
         for (int i = 0; i < qaRecords.size(); i++) {
@@ -363,6 +519,15 @@ public class UnifiedEvaluationService {
             .collect(Collectors.joining("\n"));
     }
 
+    /**
+     * 构建逐题亮点（用于二次汇总提示词）
+     * 格式："- Q1 | 问题摘要 | 分数:XX | 反馈:反馈摘要"
+     * 最多输出 20 题
+     *
+     * @param qaRecords   所有问答记录
+     * @param evaluations 逐题评估结果
+     * @return 逐题亮点文本
+     */
     private String buildQuestionHighlights(List<QaRecord> qaRecords, List<QuestionEvalDTO> evaluations) {
         List<String> highlights = new ArrayList<>();
         for (int i = 0; i < qaRecords.size(); i++) {

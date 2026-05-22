@@ -16,12 +16,24 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 面试日程服务
+ *
+ * 管理面试日程的 CRUD 操作和状态流转。
+ * 被 InterviewScheduleController 调用。
+ *
+ * 核心功能：
+ * 1. 创建/更新/删除面试日程
+ * 2. 按状态、时间范围查询日程列表
+ * 3. 更新面试状态（待确认->已确认->已完成/已取消）
+ */
 @Service
 @RequiredArgsConstructor
 public class InterviewScheduleService {
 
-    private final InterviewScheduleRepository repository;
+    private final InterviewScheduleRepository repository;  // 面试日程数据库仓库
 
+    // 可复制的字段列表（用于 BeanUtils.copyProperties）
     private static final String[] COPYABLE_FIELDS = {
         "companyName", "position", "interviewTime", "interviewType",
         "meetingLink", "roundNumber", "interviewer", "notes"

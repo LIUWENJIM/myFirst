@@ -19,8 +19,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 统一的面试邀约解析服务 - 整合规则解析和AI解析
- * Simplified interview schedule parsing service combining rule-based and AI parsing
+ * 面试邀约解析服务
+ *
+ * 整合规则解析和 AI 解析两种方式，从面试邀约文本中提取结构化信息。
+ *
+ * 解析策略：
+ * 1. 优先使用规则解析（正则匹配飞书、腾讯会议、Zoom 等平台的邀约格式）
+ * 2. 规则解析失败时，回退到 AI 解析（调用 LLM 提取信息）
+ *
+ * 支持的平台格式：
+ * - 飞书（Feishu）：时间、会议链接、公司、岗位、轮次
+ * - 腾讯会议（Tencent）：时间、会议号、密码、公司、岗位
+ * - Zoom：链接、日期、时间
+ *
+ * 提取的信息：
+ * - 公司名称、职位、面试时间
+ * - 面试类型（现场/视频/电话）
+ * - 会议链接、面试轮次、面试官
  */
 @Slf4j
 @Service
