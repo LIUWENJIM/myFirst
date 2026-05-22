@@ -68,4 +68,16 @@ export const directHireApi = {
   async deleteCompany(id: number): Promise<void> {
     return request.delete<void>(`/api/direct-hire/companies/${id}`);
   },
+
+  /**
+   * Excel导入公司
+   */
+  async importExcel(category: CompanyCategory, file: File): Promise<DirectHireCompany[]> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request.upload<DirectHireCompany[]>(
+      `/api/direct-hire/companies/import-excel?category=${category}`,
+      formData
+    );
+  },
 };

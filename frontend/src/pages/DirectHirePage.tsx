@@ -19,6 +19,8 @@ const DirectHirePage: React.FC = () => {
   const [editingCompany, setEditingCompany] = useState<DirectHireCompany | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<number | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // 表单状态
   const [formData, setFormData] = useState<CreateDirectHireRequest>({
@@ -164,6 +166,39 @@ const DirectHirePage: React.FC = () => {
     }
   }, []);
 
+  // Excel导入
+  const handleExcelImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件类型
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      alert('请选择Excel文件（.xlsx或.xls格式）');
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const result = await directHireApi.importExcel(activeCategory, file);
+      alert(`成功导入 ${result.length} 家公司`);
+      loadCompanies(activeCategory, searchKeyword || undefined);
+    } catch (error) {
+      console.error('导入失败:', error);
+      alert('导入失败，请检查文件格式');
+    } finally {
+      setImporting(false);
+      // 清空input，允许重复选择同一文件
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [activeCategory, searchKeyword, loadCompanies]);
+
+  // 触发文件选择
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -182,16 +217,36 @@ const DirectHirePage: React.FC = () => {
         <h1 className="text-2xl font-bold" style={{ color: 'var(--color-ink)' }}>
           直达招聘
         </h1>
-        <button
-          onClick={handleAddClick}
-          className="px-4 py-2 rounded-lg font-medium transition-colors"
-          style={{
-            backgroundColor: 'var(--color-primary)',
-            color: 'white',
-          }}
-        >
-          + 添加公司
-        </button>
+        <div className="flex gap-3">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleExcelImport}
+            className="hidden"
+          />
+          <button
+            onClick={handleImportClick}
+            disabled={importing}
+            className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            style={{
+              backgroundColor: 'var(--color-success)',
+              color: 'white',
+            }}
+          >
+            {importing ? '导入中...' : '导入Excel'}
+          </button>
+          <button
+            onClick={handleAddClick}
+            className="px-4 py-2 rounded-lg font-medium transition-colors"
+            style={{
+              backgroundColor: 'var(--color-primary)',
+              color: 'white',
+            }}
+          >
+            + 添加公司
+          </button>
+        </div>
       </div>
 
       {/* 分类标签页 */}

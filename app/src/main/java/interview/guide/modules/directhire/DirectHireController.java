@@ -3,6 +3,7 @@ package interview.guide.modules.directhire;
 import interview.guide.common.result.Result;
 import interview.guide.modules.directhire.model.*;
 import interview.guide.modules.directhire.service.DirectHireService;
+import interview.guide.modules.directhire.service.ExcelImportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ import java.util.List;
 public class DirectHireController {
 
     private final DirectHireService directHireService;
+    private final ExcelImportService excelImportService;
 
     @GetMapping("/api/direct-hire/companies")
     @Operation(summary = "获取公司列表", description = "按分类获取公司列表，支持搜索")
@@ -50,6 +53,26 @@ public class DirectHireController {
         @RequestParam CompanyCategory category,
         @Valid @RequestBody List<CreateDirectHireRequest> requests) {
         return Result.success(directHireService.createBatch(category, requests));
+    }
+
+    @PostMapping("/api/direct-hire/companies/import-excel")
+    @Operation(summary = "Excel导入公司", description = "从Excel文件导入公司投递信息")
+    public Result<List<DirectHireCompanyDTO>> importExcel(
+        @Parameter(description = "公司分类", required = true)
+        @RequestParam CompanyCategory category,
+        @Parameter(description = "Excel文件", required = true)
+        @RequestParam("file") MultipartFile file) {
+        try {
+            List<CreateDirectHireRequest> requests = excelImportService.parseExcel(file, category);
+            if (requests.isEmpty()) {
+                return Result.success(List.of());
+            }
+            log.info("从Excel解析到{}条公司数据，分类: {}", requests.size(), category);
+            return Result.success(directHireService.createBatch(category, requests));
+        } catch (Exception e) {
+            log.error("Excel导入失败", e);
+            return Result.error(500, "Excel导入失败: " + e.getMessage());
+        }
     }
 
     @PutMapping("/api/direct-hire/companies/{id}")

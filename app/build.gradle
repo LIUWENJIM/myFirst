@@ -47,6 +47,10 @@ dependencies {
     implementation libs.tika.core
     implementation libs.tika.parsers
 
+    // Apache POI for Excel parsing (.xlsx, .xls)
+    implementation 'org.apache.poi:poi:5.2.5'
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
     // AWS S3 SDK for RustFS storage
     implementation "software.amazon.awssdk:s3:${libs.versions.aws.sdk.get()}"
 
