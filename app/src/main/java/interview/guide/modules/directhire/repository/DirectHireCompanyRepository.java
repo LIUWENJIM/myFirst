@@ -1,6 +1,7 @@
 package interview.guide.modules.directhire.repository;
 
 import interview.guide.modules.directhire.model.ApplicationStatus;
+import interview.guide.modules.directhire.model.CompanyCategory;
 import interview.guide.modules.directhire.model.DirectHireCompanyEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,12 +15,18 @@ import java.util.Optional;
 public interface DirectHireCompanyRepository extends JpaRepository<DirectHireCompanyEntity, Long> {
 
     /**
-     * 按排序顺序查询所有公司
+     * 按分类查询所有公司（按排序顺序）
      */
-    List<DirectHireCompanyEntity> findAllByOrderBySortOrderAsc();
+    List<DirectHireCompanyEntity> findByCategoryOrderBySortOrderAsc(CompanyCategory category);
 
     /**
-     * 按公司名称模糊搜索
+     * 按分类和公司名称模糊搜索
+     */
+    List<DirectHireCompanyEntity> findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(
+        CompanyCategory category, String companyName);
+
+    /**
+     * 按公司名称模糊搜索（所有分类）
      */
     List<DirectHireCompanyEntity> findByCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(String companyName);
 
@@ -29,19 +36,22 @@ public interface DirectHireCompanyRepository extends JpaRepository<DirectHireCom
     List<DirectHireCompanyEntity> findByStatusOrderBySortOrderAsc(ApplicationStatus status);
 
     /**
-     * 检查公司名称是否存在
+     * 检查公司名称是否存在（同一分类内）
      */
-    boolean existsByCompanyNameIgnoreCase(String companyName);
+    boolean existsByCategoryAndCompanyNameIgnoreCase(CompanyCategory category, String companyName);
 
     /**
-     * 检查公司名称是否存在（排除指定ID）
+     * 检查公司名称是否存在（同一分类内，排除指定ID）
      */
-    @Query("SELECT COUNT(d) > 0 FROM DirectHireCompanyEntity d WHERE LOWER(d.companyName) = LOWER(:name) AND d.id != :id")
-    boolean existsByCompanyNameIgnoreCaseAndIdNot(@Param("name") String companyName, @Param("id") Long id);
+    @Query("SELECT COUNT(d) > 0 FROM DirectHireCompanyEntity d WHERE d.category = :category AND LOWER(d.companyName) = LOWER(:name) AND d.id != :id")
+    boolean existsByCategoryAndCompanyNameIgnoreCaseAndIdNot(
+        @Param("category") CompanyCategory category,
+        @Param("name") String companyName,
+        @Param("id") Long id);
 
     /**
-     * 获取最大排序值
+     * 获取指定分类的最大排序值
      */
-    @Query("SELECT COALESCE(MAX(d.sortOrder), 0) FROM DirectHireCompanyEntity d")
-    Integer findMaxSortOrder();
+    @Query("SELECT COALESCE(MAX(d.sortOrder), 0) FROM DirectHireCompanyEntity d WHERE d.category = :category")
+    Integer findMaxSortOrderByCategory(@Param("category") CompanyCategory category);
 }

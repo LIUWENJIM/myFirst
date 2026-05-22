@@ -3,12 +3,14 @@ import { directHireApi } from '../api/directHire';
 import type {
   DirectHireCompany,
   ApplicationStatus,
+  CompanyCategory,
   CreateDirectHireRequest,
 } from '../types/directHire';
-import { STATUS_LABELS, STATUS_COLORS } from '../types/directHire';
+import { STATUS_LABELS, STATUS_COLORS, CATEGORY_LABELS } from '../types/directHire';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const DirectHirePage: React.FC = () => {
+  const [activeCategory, setActiveCategory] = useState<CompanyCategory>('BIG_TECH');
   const [companies, setCompanies] = useState<DirectHireCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -20,6 +22,7 @@ const DirectHirePage: React.FC = () => {
 
   // 表单状态
   const [formData, setFormData] = useState<CreateDirectHireRequest>({
+    category: 'BIG_TECH',
     companyName: '',
     applicationLink: '',
     referralCode: '',
@@ -28,10 +31,10 @@ const DirectHirePage: React.FC = () => {
   });
 
   // 加载公司列表
-  const loadCompanies = useCallback(async (search?: string) => {
+  const loadCompanies = useCallback(async (category: CompanyCategory, search?: string) => {
     setLoading(true);
     try {
-      const data = await directHireApi.getCompanies(search);
+      const data = await directHireApi.getCompanies(category, search);
       setCompanies(data);
     } catch (error) {
       console.error('加载公司列表失败:', error);
@@ -41,8 +44,14 @@ const DirectHirePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    loadCompanies();
-  }, [loadCompanies]);
+    loadCompanies(activeCategory);
+  }, [activeCategory, loadCompanies]);
+
+  // 切换分类
+  const handleCategoryChange = useCallback((category: CompanyCategory) => {
+    setActiveCategory(category);
+    setSearchKeyword('');
+  }, []);
 
   // 搜索
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,16 +59,17 @@ const DirectHirePage: React.FC = () => {
     setSearchKeyword(value);
     // 防抖搜索
     const timer = setTimeout(() => {
-      loadCompanies(value || undefined);
+      loadCompanies(activeCategory, value || undefined);
     }, 300);
     return () => clearTimeout(timer);
-  }, [loadCompanies]);
+  }, [activeCategory, loadCompanies]);
 
   // 打开添加弹窗
   const handleAddClick = useCallback(() => {
     setModalMode('create');
     setEditingCompany(null);
     setFormData({
+      category: activeCategory,
       companyName: '',
       applicationLink: '',
       referralCode: '',
@@ -67,13 +77,14 @@ const DirectHirePage: React.FC = () => {
       lastAccessDate: undefined,
     });
     setIsModalOpen(true);
-  }, []);
+  }, [activeCategory]);
 
   // 打开编辑弹窗
   const handleEditClick = useCallback((company: DirectHireCompany) => {
     setModalMode('edit');
     setEditingCompany(company);
     setFormData({
+      category: company.category,
       companyName: company.companyName,
       applicationLink: company.applicationLink || '',
       referralCode: company.referralCode || '',
@@ -92,35 +103,38 @@ const DirectHirePage: React.FC = () => {
         await directHireApi.updateCompany(editingCompany.id, formData);
       }
       setIsModalOpen(false);
-      loadCompanies(searchKeyword || undefined);
+      loadCompanies(activeCategory, searchKeyword || undefined);
     } catch (error) {
       console.error('保存失败:', error);
       alert('保存失败，请重试');
     }
-  }, [modalMode, editingCompany, formData, searchKeyword, loadCompanies]);
+  }, [modalMode, editingCompany, formData, activeCategory, searchKeyword, loadCompanies]);
 
   // 更新状态
   const handleStatusChange = useCallback(async (id: number, status: ApplicationStatus) => {
     try {
       const today = new Date().toISOString().split('T')[0];
       await directHireApi.updateStatus(id, { status, lastAccessDate: today });
-      loadCompanies(searchKeyword || undefined);
+      loadCompanies(activeCategory, searchKeyword || undefined);
     } catch (error) {
       console.error('更新状态失败:', error);
       alert('更新状态失败，请重试');
     }
-  }, [searchKeyword, loadCompanies]);
+  }, [activeCategory, searchKeyword, loadCompanies]);
 
   // 更新日期
   const handleDateChange = useCallback(async (id: number, date: string) => {
     try {
-      await directHireApi.updateStatus(id, { status: companies.find(c => c.id === id)?.status || 'NOT_APPLIED', lastAccessDate: date });
-      loadCompanies(searchKeyword || undefined);
+      await directHireApi.updateStatus(id, {
+        status: companies.find(c => c.id === id)?.status || 'NOT_APPLIED',
+        lastAccessDate: date
+      });
+      loadCompanies(activeCategory, searchKeyword || undefined);
     } catch (error) {
       console.error('更新日期失败:', error);
       alert('更新日期失败，请重试');
     }
-  }, [companies, searchKeyword, loadCompanies]);
+  }, [companies, activeCategory, searchKeyword, loadCompanies]);
 
   // 删除确认
   const handleDeleteClick = useCallback((id: number) => {
@@ -133,7 +147,7 @@ const DirectHirePage: React.FC = () => {
     if (companyToDelete) {
       try {
         await directHireApi.deleteCompany(companyToDelete);
-        loadCompanies(searchKeyword || undefined);
+        loadCompanies(activeCategory, searchKeyword || undefined);
       } catch (error) {
         console.error('删除失败:', error);
         alert('删除失败，请重试');
@@ -141,7 +155,7 @@ const DirectHirePage: React.FC = () => {
     }
     setDeleteConfirmOpen(false);
     setCompanyToDelete(null);
-  }, [companyToDelete, searchKeyword, loadCompanies]);
+  }, [companyToDelete, activeCategory, searchKeyword, loadCompanies]);
 
   // 点击链接
   const handleLinkClick = useCallback((url: string) => {
@@ -178,6 +192,24 @@ const DirectHirePage: React.FC = () => {
         >
           + 添加公司
         </button>
+      </div>
+
+      {/* 分类标签页 */}
+      <div className="flex gap-2 mb-6">
+        {(Object.entries(CATEGORY_LABELS) as [CompanyCategory, string][]).map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => handleCategoryChange(value)}
+            className="px-6 py-2.5 rounded-lg font-medium transition-all duration-200"
+            style={{
+              backgroundColor: activeCategory === value ? 'var(--color-primary)' : 'transparent',
+              color: activeCategory === value ? 'white' : 'var(--color-ink-secondary)',
+              border: activeCategory === value ? 'none' : '1px solid var(--color-hairline)',
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* 搜索框 */}
@@ -315,7 +347,7 @@ const DirectHirePage: React.FC = () => {
 
         {companies.length === 0 && (
           <div className="text-center py-12" style={{ color: 'var(--color-ink-tertiary)' }}>
-            {searchKeyword ? '没有找到匹配的公司' : '暂无公司数据，点击"添加公司"开始'}
+            {searchKeyword ? '没有找到匹配的公司' : `暂无${CATEGORY_LABELS[activeCategory]}数据，点击"添加公司"开始`}
           </div>
         )}
       </div>
@@ -332,6 +364,30 @@ const DirectHirePage: React.FC = () => {
             </h2>
 
             <div className="space-y-4">
+              {/* 公司分类 */}
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ink-secondary)' }}>
+                  公司分类 *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value as CompanyCategory })}
+                  className="w-full px-3 py-2 rounded-lg border"
+                  style={{
+                    borderColor: 'var(--color-hairline)',
+                    backgroundColor: 'var(--color-bg-secondary)',
+                    color: 'var(--color-ink)',
+                  }}
+                  disabled={modalMode === 'edit'}
+                >
+                  {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* 公司名称 */}
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-ink-secondary)' }}>

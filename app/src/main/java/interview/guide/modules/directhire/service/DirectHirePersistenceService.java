@@ -19,20 +19,20 @@ public class DirectHirePersistenceService {
     private final DirectHireCompanyRepository repository;
 
     /**
-     * 获取所有公司（按排序顺序）
+     * 按分类获取所有公司（按排序顺序）
      */
-    public List<DirectHireCompanyEntity> findAll() {
-        return repository.findAllByOrderBySortOrderAsc();
+    public List<DirectHireCompanyEntity> findByCategory(CompanyCategory category) {
+        return repository.findByCategoryOrderBySortOrderAsc(category);
     }
 
     /**
-     * 搜索公司
+     * 按分类搜索公司
      */
-    public List<DirectHireCompanyEntity> search(String keyword) {
+    public List<DirectHireCompanyEntity> searchByCategory(CompanyCategory category, String keyword) {
         if (keyword == null || keyword.isBlank()) {
-            return findAll();
+            return findByCategory(category);
         }
-        return repository.findByCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(keyword);
+        return repository.findByCategoryAndCompanyNameContainingIgnoreCaseOrderBySortOrderAsc(category, keyword);
     }
 
     /**
@@ -48,19 +48,45 @@ public class DirectHirePersistenceService {
      */
     @Transactional(rollbackFor = Exception.class)
     public DirectHireCompanyEntity create(CreateDirectHireRequest request) {
-        if (repository.existsByCompanyNameIgnoreCase(request.companyName())) {
-            throw new BusinessException(ErrorCode.DIRECT_HIRE_COMPANY_ALREADY_EXISTS, "公司名称已存在: " + request.companyName());
+        if (repository.existsByCategoryAndCompanyNameIgnoreCase(request.category(), request.companyName())) {
+            throw new BusinessException(ErrorCode.DIRECT_HIRE_COMPANY_ALREADY_EXISTS,
+                "该分类下公司名称已存在: " + request.companyName());
         }
 
         DirectHireCompanyEntity entity = new DirectHireCompanyEntity();
+        entity.setCategory(request.category());
         entity.setCompanyName(request.companyName());
         entity.setApplicationLink(request.applicationLink());
         entity.setReferralCode(request.referralCode());
         entity.setStatus(request.status() != null ? request.status() : ApplicationStatus.NOT_APPLIED);
         entity.setLastAccessDate(request.lastAccessDate());
-        entity.setSortOrder(repository.findMaxSortOrder() + 1);
+        entity.setSortOrder(repository.findMaxSortOrderByCategory(request.category()) + 1);
 
         return repository.save(entity);
+    }
+
+    /**
+     * 批量创建公司（用于导入）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public List<DirectHireCompanyEntity> createBatch(CompanyCategory category, List<CreateDirectHireRequest> requests) {
+        int startSortOrder = repository.findMaxSortOrderByCategory(category) + 1;
+        List<DirectHireCompanyEntity> entities = new java.util.ArrayList<>();
+
+        for (int i = 0; i < requests.size(); i++) {
+            CreateDirectHireRequest request = requests.get(i);
+            DirectHireCompanyEntity entity = new DirectHireCompanyEntity();
+            entity.setCategory(category);
+            entity.setCompanyName(request.companyName());
+            entity.setApplicationLink(request.applicationLink());
+            entity.setReferralCode(request.referralCode());
+            entity.setStatus(request.status() != null ? request.status() : ApplicationStatus.NOT_APPLIED);
+            entity.setLastAccessDate(request.lastAccessDate());
+            entity.setSortOrder(startSortOrder + i);
+            entities.add(entity);
+        }
+
+        return repository.saveAll(entities);
     }
 
     /**
@@ -71,8 +97,10 @@ public class DirectHirePersistenceService {
         DirectHireCompanyEntity entity = findById(id);
 
         if (request.companyName() != null) {
-            if (repository.existsByCompanyNameIgnoreCaseAndIdNot(request.companyName(), id)) {
-                throw new BusinessException(ErrorCode.DIRECT_HIRE_COMPANY_ALREADY_EXISTS, "公司名称已存在: " + request.companyName());
+            if (repository.existsByCategoryAndCompanyNameIgnoreCaseAndIdNot(
+                    entity.getCategory(), request.companyName(), id)) {
+                throw new BusinessException(ErrorCode.DIRECT_HIRE_COMPANY_ALREADY_EXISTS,
+                    "该分类下公司名称已存在: " + request.companyName());
             }
             entity.setCompanyName(request.companyName());
         }

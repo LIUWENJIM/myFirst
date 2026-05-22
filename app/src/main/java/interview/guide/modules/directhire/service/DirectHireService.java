@@ -15,10 +15,10 @@ public class DirectHireService {
     private final DirectHirePersistenceService persistenceService;
 
     /**
-     * 获取所有公司列表
+     * 按分类获取公司列表
      */
-    public List<DirectHireCompanyDTO> getCompanies(String search) {
-        List<DirectHireCompanyEntity> entities = persistenceService.search(search);
+    public List<DirectHireCompanyDTO> getCompanies(CompanyCategory category, String search) {
+        List<DirectHireCompanyEntity> entities = persistenceService.searchByCategory(category, search);
         return entities.stream()
             .map(this::toDTO)
             .toList();
@@ -38,6 +38,16 @@ public class DirectHireService {
     public DirectHireCompanyDTO createCompany(CreateDirectHireRequest request) {
         DirectHireCompanyEntity entity = persistenceService.create(request);
         return toDTO(entity);
+    }
+
+    /**
+     * 批量创建公司（用于导入）
+     */
+    public List<DirectHireCompanyDTO> createBatch(CompanyCategory category, List<CreateDirectHireRequest> requests) {
+        List<DirectHireCompanyEntity> entities = persistenceService.createBatch(category, requests);
+        return entities.stream()
+            .map(this::toDTO)
+            .toList();
     }
 
     /**
@@ -76,6 +86,7 @@ public class DirectHireService {
     private DirectHireCompanyDTO toDTO(DirectHireCompanyEntity entity) {
         return new DirectHireCompanyDTO(
             entity.getId(),
+            entity.getCategory(),
             entity.getSortOrder(),
             entity.getCompanyName(),
             entity.getApplicationLink(),

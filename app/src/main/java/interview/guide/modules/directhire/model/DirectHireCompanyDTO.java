@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
  */
 public record DirectHireCompanyDTO(
     Long id,
+    CompanyCategory category,
     Integer sortOrder,
     String companyName,
     String applicationLink,

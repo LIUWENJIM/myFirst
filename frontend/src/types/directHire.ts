@@ -7,8 +7,11 @@ export type ApplicationStatus =
   | 'REJECTED'
   | 'NO_POSITION';
 
+export type CompanyCategory = 'BIG_TECH' | 'DAILY_UPDATE';
+
 export interface DirectHireCompany {
   id: number;
+  category: CompanyCategory;
   sortOrder: number;
   companyName: string;
   applicationLink: string;
@@ -20,6 +23,7 @@ export interface DirectHireCompany {
 }
 
 export interface CreateDirectHireRequest {
+  category: CompanyCategory;
   companyName: string;
   applicationLink?: string;
   referralCode?: string;
@@ -46,6 +50,11 @@ export interface UpdateSortOrderRequest {
     sortOrder: number;
   }>;
 }
+
+export const CATEGORY_LABELS: Record<CompanyCategory, string> = {
+  BIG_TECH: '互联网大厂',
+  DAILY_UPDATE: '每日更新大厂',
+};
 
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   NOT_APPLIED: '未投递',

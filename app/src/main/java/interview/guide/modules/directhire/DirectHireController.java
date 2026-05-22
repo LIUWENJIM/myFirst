@@ -22,11 +22,13 @@ public class DirectHireController {
     private final DirectHireService directHireService;
 
     @GetMapping("/api/direct-hire/companies")
-    @Operation(summary = "获取公司列表", description = "获取所有公司列表，支持搜索")
+    @Operation(summary = "获取公司列表", description = "按分类获取公司列表，支持搜索")
     public Result<List<DirectHireCompanyDTO>> getCompanies(
+        @Parameter(description = "公司分类", required = true)
+        @RequestParam CompanyCategory category,
         @Parameter(description = "搜索关键词")
         @RequestParam(required = false) String search) {
-        return Result.success(directHireService.getCompanies(search));
+        return Result.success(directHireService.getCompanies(category, search));
     }
 
     @GetMapping("/api/direct-hire/companies/{id}")
@@ -39,6 +41,15 @@ public class DirectHireController {
     @Operation(summary = "创建公司", description = "添加新的公司投递信息")
     public Result<DirectHireCompanyDTO> createCompany(@Valid @RequestBody CreateDirectHireRequest request) {
         return Result.success(directHireService.createCompany(request));
+    }
+
+    @PostMapping("/api/direct-hire/companies/batch")
+    @Operation(summary = "批量创建公司", description = "批量导入公司投递信息")
+    public Result<List<DirectHireCompanyDTO>> createBatch(
+        @Parameter(description = "公司分类", required = true)
+        @RequestParam CompanyCategory category,
+        @Valid @RequestBody List<CreateDirectHireRequest> requests) {
+        return Result.success(directHireService.createBatch(category, requests));
     }
 
     @PutMapping("/api/direct-hire/companies/{id}")

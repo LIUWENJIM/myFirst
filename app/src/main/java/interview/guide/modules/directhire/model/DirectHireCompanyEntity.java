@@ -10,13 +10,18 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "direct_hire_companies", indexes = {
     @Index(name = "idx_direct_hire_sort_order", columnList = "sortOrder"),
-    @Index(name = "idx_direct_hire_status", columnList = "status")
+    @Index(name = "idx_direct_hire_status", columnList = "status"),
+    @Index(name = "idx_direct_hire_category", columnList = "category")
 })
 public class DirectHireCompanyEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private CompanyCategory category;
 
     @Column(nullable = false)
     private Integer sortOrder;
@@ -50,6 +55,9 @@ public class DirectHireCompanyEntity {
         if (status == null) {
             status = ApplicationStatus.NOT_APPLIED;
         }
+        if (category == null) {
+            category = CompanyCategory.BIG_TECH;
+        }
     }
 
     @PreUpdate
@@ -64,6 +72,14 @@ public class DirectHireCompanyEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public CompanyCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(CompanyCategory category) {
+        this.category = category;
     }
 
     public Integer getSortOrder() {

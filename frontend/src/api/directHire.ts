@@ -1,6 +1,7 @@
 import { request } from './request';
 import type {
   DirectHireCompany,
+  CompanyCategory,
   CreateDirectHireRequest,
   UpdateDirectHireRequest,
   UpdateStatusRequest,
@@ -9,11 +10,14 @@ import type {
 
 export const directHireApi = {
   /**
-   * 获取公司列表
+   * 按分类获取公司列表
    */
-  async getCompanies(search?: string): Promise<DirectHireCompany[]> {
-    const params = search ? `?search=${encodeURIComponent(search)}` : '';
-    return request.get<DirectHireCompany[]>(`/api/direct-hire/companies${params}`);
+  async getCompanies(category: CompanyCategory, search?: string): Promise<DirectHireCompany[]> {
+    const params = new URLSearchParams({ category });
+    if (search) {
+      params.append('search', search);
+    }
+    return request.get<DirectHireCompany[]>(`/api/direct-hire/companies?${params.toString()}`);
   },
 
   /**
@@ -28,6 +32,13 @@ export const directHireApi = {
    */
   async createCompany(req: CreateDirectHireRequest): Promise<DirectHireCompany> {
     return request.post<DirectHireCompany>('/api/direct-hire/companies', req);
+  },
+
+  /**
+   * 批量创建公司
+   */
+  async createBatch(category: CompanyCategory, req: CreateDirectHireRequest[]): Promise<DirectHireCompany[]> {
+    return request.post<DirectHireCompany[]>(`/api/direct-hire/companies/batch?category=${category}`, req);
   },
 
   /**
