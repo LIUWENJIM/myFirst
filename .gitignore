@@ -34,3 +34,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# 本地配置文件（含API密钥）
+app/src/main/resources/application.yml
